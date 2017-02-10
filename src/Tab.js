@@ -3,13 +3,14 @@ class Tab {
 	constructor(nick, tabDriver) {
 		this.nick = nick
 		this.tabDriver = tabDriver
+		this.actionInProgress = false
 	}
 
 	_callToTabDriver(action, callback) {
-		if (this.ended)
-			throw new Error('this Nick instance has finished its work (end() was called) - no other actions can be done with it')
+		if (this.tabDriver.ended)
+			throw new Error('this tab has finished its work (end() was called) - no other actions can be done with it')
 		if (this.actionInProgress)
-			throw new Error('cannot do this while another Nick method is already running - each Nick instance can execute only one action at a time')
+			throw new Error('cannot do this while another tab method is already running - each tab can execute only one action at a time')
 		const done = (callback) => {
 			return () => {
 				this.actionInProgress = false

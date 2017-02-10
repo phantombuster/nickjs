@@ -1,7 +1,9 @@
+import * as _ from 'underscore'
+
 class TabDriver {
 
 	constructor(options) {
-		this._ended = false
+		this.ended = false
 		this._nextStep = null
 		this._stepIsRunning = false
 		this._endCallback = null
@@ -26,6 +28,11 @@ class TabDriver {
 				height: options.height // TODO check
 			}
 		}
+
+		// only set the option if the user provided it (prevents overriding the --load-images CLI flag)
+		// TODO document special case: loadImages can be absent, but not other options
+		if (_.has(options, 'loadImages'))
+			casperOptions.pageSettings.loadImages = options.loadImages
 
 		this.casper = casper.create(casperOptions)
 
@@ -77,11 +84,80 @@ class TabDriver {
 				page.onResourceTimeout = (request) => console.log(`> Timeout: ${request.url}`)
 			})
 		}
+
+		if (options.printPageErrors)
+			this.casper.on('page.error', (err) => {
+				console.log(`> Page JavaScrit error: ${err}`)
+			})
+
+		if (options.printResourceErrors)
+			this.casper.on('resource.error', (err) => {
+				if (err.errorString === 'Protocol "" is unknown') // when a resource is aborted (net.abort()), this error is generated
+					return
+				let message = `> Resource error: ${err.status != null ? `${err.status} - ` : ''}${err.statusText != null ? `${err.statusText} - ` : ''}${err.errorString}`
+				if ((typeof(err.url) === 'string') && (message.indexOf(err.url) < 0))
+					message += " (#{err.url})"
+				console.log(message)
+			})
+
+		// open() error detection
+		this._openState = {
+			inProgress: false,
+			error: null,
+			httpCode: null,
+			httpStatus: null,
+			url: null,
+			last50Errors: []
+		}
+		// collects errors to get the most important thing: the errorString field
+		this.casper.on('resource.error', (error) => {
+			if (this._openState.inProgress)
+				this._openState.last50Errors.push(error)
+				if (this._openState.last50Errors.length > 50)
+					this._openState.last50Errors.shift()
+		})
+		// this event always arrives after the eventual resource.error events
+		// so we search back in our history of errors to find the corresponding errorString
+		this.casper.on('page.resource.received', (resource) => {
+			if (this._openState.inProgress)
+				if (typeof(resource.status) != 'number') {
+					this._openState.error = 'unknown error'
+					if (typeof(resource.id) === 'number')
+						for (let err of this._openState.last50Errors)
+							if (resource.id === err.id)
+								if (typeof(err.errorString) === 'string')
+									this._openState.error = err.errorString
+				} else
+					this._openState.httpCode = resource.status
+				this._openState.httpStatus = resource.statusText
+				this._openState.url = resource.url
+		})
+
+		// start the CasperJS wait loop
+		this.casper.start(null, null)
+		waitLoop = () => {
+			this.casper.wait(10)
+			this.casper.then(() => {
+				if (!this._ended) {
+					if (this._nextStep != null) {
+						const step = this._nextStep
+						this._nextStep = null
+						this._stepIsRunning = true
+						step()
+					}
+					waitLoop()
+				}
+			})
+		}
+		waitLoop()
+		this.casper.run(() => {
+			if (this._endCallback != null)
+				this._endCallback()
+		})
 	}
 
 	_addStep(step) {
-		if (this._ended)
-			throw new Error('this tab has finished its work (end() was called) - no other actions can be done with it')
+		this._nextStep = step
 	}
 
 	open(url, options, callback) {

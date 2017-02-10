@@ -1,5 +1,4 @@
 import * as _ from 'underscore'
-import * as async from 'async'
 import Tab from './Tab'
 import { Browser as CasperBrowser } from './casper/BrowserDriver'
 
@@ -21,6 +20,7 @@ class Nick {
 						throw new TypeError('blacklist option must be an array of strings or regexes')
 			else
 				throw new TypeError('blacklist option must be an array of strings or regexes')
+		options.blacklist = blacklist
 
 		if (_.has(options, 'driver'))
 			if (typeof options.driver === 'string')
@@ -37,8 +37,6 @@ class Nick {
 
 		this.options = options
 
-		//this.ended = false
-		//this.actionInProgress = false
 		this._initialized = false
 		this._initializing = false
 	}
