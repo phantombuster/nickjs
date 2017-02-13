@@ -30,15 +30,18 @@
   },
   "scripts": {
     "test": "echo \"Error: no test exist\" && exit 1",
-    "build": "babel src -d lib",
-    "build:watch": "babel -w src -d lib"
+    "build": "babel --retain-lines src -d lib",
+    "build:watch": "babel --retain-lines -w src -d lib"
   },
   "version": "0.0.1",
   "devDependencies": {
-    "babel-cli": "6.18.0",
-    "babel-preset-env": "1.1.4"
+    "babel-cli": "6.22.0",
+    "babel-plugin-transform-runtime": "6.22.0",
+    "babel-preset-latest": "6.22.0"
   },
   "dependencies": {
+    "babel-runtime": "6.22.0",
+    "bluebird": "3.4.7",
     "underscore": "1.8.3"
   }
 }

@@ -1,11 +1,17 @@
-import { create } from 'casper'
+import * as _ from 'underscore'
 import TabDriver from './TabDriver'
 
 class BrowserDriver {
 
-	construtor(nick, options) {
-		this._nick = nick
-		this._options = options
+	construtor(options) {
+		if (_.isObject(phantom) && (typeof(phantom.casperPath) === 'string'))
+			this._options = options
+		else
+			throw new Error("it seems we're not in a PhantomJS environment - cannot start CasperJS browser driver")
+	}
+
+	exit(code) {
+		phantom.exit(code)
 	}
 
 	_initialize(callback) {

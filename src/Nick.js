@@ -1,6 +1,7 @@
+import Promise from 'bluebird'
 import * as _ from 'underscore'
 import Tab from './Tab'
-import { Browser as CasperBrowser } from './casper/BrowserDriver'
+import CasperBrowser from './casper/BrowserDriver'
 
 class Nick {
 
@@ -24,21 +25,29 @@ class Nick {
 
 		if (_.has(options, 'driver'))
 			if (typeof options.driver === 'string')
-				driver = options.driver.toLowerCase()
+				var driver = options.driver.toLowerCase()
 			else
 				throw new TypeError('driver option must be a string')
 		else
-			driver = 'casper'
+			var driver = 'casper'
 
 		if (['casper', 'casperjs'].indexOf(driver) != -1)
-			this.browserDriver = new CasperBrowser(this, options)
+			this._browserDriver = new CasperBrowser(options)
 		else
 			throw new Error(`"${driver}" is an unknown driver`)
 
-		this.options = options
-
+		this._options = options
 		this._initialized = false
 		this._initializing = false
+	}
+
+	// Read-only members
+	getDriver() { return this._browserDriver } // shorter but less descriptive way to get the tab driver
+	getBrowserDriver() { return this._browserDriver }
+	getOptions() { return this._options }
+
+	exit(code) {
+		this._browserDriver.exit(code)
 	}
 
 	// Initializes the underlying browser driver
@@ -47,7 +56,7 @@ class Nick {
 	// Note: this method could be called by the end user for specific cases where initializing
 	// the browser without opening tabs makes sense
 	initialize(callback = null) {
-		promise = new Promise((fulfill, reject) => {
+		const promise = new Promise((fulfill, reject) => {
 			if (this._initialized)
 				fulfill(null)
 			else
@@ -64,7 +73,7 @@ class Nick {
 					checkForInitialization()
 				} else {
 					this._initializing = true
-					this.browserDriver._initialize((err) => {
+					this._browserDriver._initialize((err) => {
 						this._initializing = false
 						if (err)
 							reject(err)
@@ -80,7 +89,7 @@ class Nick {
 	newTab(callback = null) {
 		return this.initialize().then(() => {
 			return new Promise((fulfill, reject) => {
-				this.browserDriver._newTabDriver((err, tabDriver) => {
+				this._browserDriver._newTabDriver((err, tabDriver) => {
 					if (err)
 						reject(err)
 					else
