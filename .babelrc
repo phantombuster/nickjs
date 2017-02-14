@@ -7,6 +7,13 @@
       "helpers": true,
       "polyfill": true,
       "regenerator": true
+    }],
+    ["inject-banner", {
+      "bannerCode": "var require = patchRequire(require);"
     }]
-  ]
+  ],
+  "comments": false,
+  "parserOpts": {
+    "startLine": 2
+  }
 }

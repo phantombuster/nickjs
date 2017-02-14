@@ -1,3 +1,4 @@
+import * as _ from 'underscore'
 import Promise from 'bluebird'
 
 class Tab {

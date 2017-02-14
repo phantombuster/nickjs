@@ -2,8 +2,9 @@
 // Properties and methods starting with _ are meant to be called by the higher-level Nick tab
 // Properties and methods starting with __ are private to the driver
 // Other "public" members can be accessed by the end user (with caution)
+
 import * as _ from 'underscore'
-import { create } from 'casper'
+import * as casper from 'casper'
 
 class TabDriver {
 
@@ -22,19 +23,18 @@ class TabDriver {
 				localToRemoteUrlAccessEnabled: true,
 				webSecurityEnabled: false,
 				loadPlugins: false,
-				userAgent: options.userAgent, // TODO check
-				resourceTimeout: options.resourceTimeout, // TODO check
-				loadImages: options.loadImages // TODO dont set because of CLI option
+				userAgent: options.userAgent,
+				resourceTimeout: options.timeout
 			},
 			logLevel: 'debug',
 			viewportSize: {
-				width: options.width, // TODO check
-				height: options.height // TODO check
+				width: options.width,
+				height: options.height
 			}
 		}
 
-		// only set the option if the user provided it (prevents overriding the --load-images CLI flag)
-		// TODO document special case: loadImages can be absent, but not other options
+		// unlike other options, this one can be absent
+		// only set the option if the end user provided it (prevents overriding the --load-images CLI flag)
 		if (_.has(options, 'loadImages'))
 			casperOptions.pageSettings.loadImages = options.loadImages
 
@@ -140,6 +140,19 @@ class TabDriver {
 				this.__openState.url = resource.url
 			}
 		})
+
+		// better logging of stack trace
+		// (is it a good idea to override this on every new tab instance?
+		//  but we need to because casperjs does it anyway and logs nothing...)
+		console.log("installing better stack trace")
+		phantom.onError = (msg, trace) => {
+			console.log(`\n${msg}`)
+			if (trace && trace.length)
+				for (const f of trace)
+					console.log(` at ${f.file || f.sourceURL}:${f.line}${f.function ? ` (in function ${f.function})` : ''}`)
+			console.log('')
+			phantom.exit(1)
+		}
 
 		// start the CasperJS wait loop
 		this.casper.start(null, null)

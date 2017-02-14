@@ -3,7 +3,7 @@ import TabDriver from './TabDriver'
 
 class BrowserDriver {
 
-	construtor(options) {
+	constructor(options) {
 		if (_.isObject(phantom) && (typeof(phantom.casperPath) === 'string'))
 			this._options = options
 		else
@@ -22,7 +22,7 @@ class BrowserDriver {
 	}
 
 	_newTabDriver(callback) {
-		callback(new TabDriver(this._options))
+		callback(null, new TabDriver(this._options))
 	}
 
 }
