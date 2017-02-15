@@ -120,9 +120,9 @@ class Nick {
 	}
 
 	// Read-only members
-	getDriver() { return this._browserDriver } // shorter but less descriptive way to get the tab driver
-	getBrowserDriver() { return this._browserDriver }
-	getOptions() { return this._options }
+	get driver() { return this._browserDriver } // shorter but less descriptive way to get the tab driver
+	get browserDriver() { return this._browserDriver }
+	get options() { return this._options }
 
 	exit(code) {
 		this._browserDriver.exit(code)

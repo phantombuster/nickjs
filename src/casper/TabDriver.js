@@ -1,7 +1,10 @@
-// Implementation of a CasperJS tab
-// Properties and methods starting with _ are meant to be called by the higher-level Nick tab
-// Properties and methods starting with __ are private to the driver
-// Other "public" members can be accessed by the end user (with caution)
+// Properties starting with _ are meant for the higher-level Nick tab
+// Properties starting with __ are private to the driver
+// The read-only property "casper" can be accessed by the end-user (if he knows what he's doing)
+
+// Note: this file needs to have "var require = patchRequire(require);" before importing casper
+// See http://docs.casperjs.org/en/latest/writing_modules.html
+// An ugly post-processing is done (after babel) to add this line (see npm scripts)
 
 import * as _ from 'underscore'
 import * as casper from 'casper'
@@ -9,16 +12,16 @@ import * as casper from 'casper'
 class TabDriver {
 
 	constructor(options) {
-		this.__ended = false
-		this.__nextStep = null
+		this.__closed = false
 		this.__endCallback = null
+		this.__nextStep = null
 
 		const casperOptions = {
 			verbose: false,
 			colorizerType: 'Dummy',
 			exitOnError: true,
 			silentErrors: false,
-			retryTimeout: 25,
+			retryTimeout: 25,http://docs.casperjs.org/en/latest/writing_modules.html
 			pageSettings: {
 				localToRemoteUrlAccessEnabled: true,
 				webSecurityEnabled: false,
@@ -38,10 +41,10 @@ class TabDriver {
 		if (_.has(options, 'loadImages'))
 			casperOptions.pageSettings.loadImages = options.loadImages
 
-		this.casper = casper.create(casperOptions)
+		this.__casper = casper.create(casperOptions)
 
 		if ((options.whitelist.length > 0) || (options.blacklist.length > 0))
-			this.casper.on('resource.requested', (request, net) => {
+			this.__casper.on('resource.requested', (request, net) => {
 				if (options.whitelist.length > 0) {
 					let found = false
 					for (white of options.whitelist)
@@ -79,23 +82,23 @@ class TabDriver {
 			})
 
 		if (options.printNavigation) {
-			this.casper.on('navigation.requested', (url, type, isLocked, isMainFrame) => {
+			this.__casper.on('navigation.requested', (url, type, isLocked, isMainFrame) => {
 				if (isMainFrame)
 					console.log(`> Navigation${type !== 'Other' ? ` (${type})` : ''}${isLocked ? '' : ' (not locked)'}: ${url}`)
 			})
-			this.casper.on('page.created', (page) => {
+			this.__casper.on('page.created', (page) => {
 				console.log('> New PhantomJS WebPage created')
 				page.onResourceTimeout = (request) => console.log(`> Timeout: ${request.url}`)
 			})
 		}
 
 		if (options.printPageErrors)
-			this.casper.on('page.error', (err) => {
+			this.__casper.on('page.error', (err) => {
 				console.log(`> Page JavaScrit error: ${err}`)
 			})
 
 		if (options.printResourceErrors)
-			this.casper.on('resource.error', (err) => {
+			this.__casper.on('resource.error', (err) => {
 				if (err.errorString === 'Protocol "" is unknown') // when a resource is aborted (net.abort()), this error is generated
 					return
 				let message = `> Resource error: ${err.status != null ? `${err.status} - ` : ''}${err.statusText != null ? `${err.statusText} - ` : ''}${err.errorString}`
@@ -116,7 +119,7 @@ class TabDriver {
 			last50Errors: []
 		}
 		// collects errors to get the most important thing: the errorString field
-		this.casper.on('resource.error', (error) => {
+		this.__casper.on('resource.error', (error) => {
 			if (this.__openState.inProgress) {
 				this.__openState.last50Errors.push(error)
 				if (this.__openState.last50Errors.length > 50)
@@ -125,7 +128,7 @@ class TabDriver {
 		})
 		// this event always arrives after the eventual resource.error events
 		// so we search back in our history of errors to find the corresponding errorString
-		this.casper.on('page.resource.received', (resource) => {
+		this.__casper.on('page.resource.received', (resource) => {
 			if (this.__openState.inProgress) {
 				if (typeof(resource.status) !== 'number') {
 					this.__openState.error = 'unknown error'
@@ -144,7 +147,6 @@ class TabDriver {
 		// better logging of stack trace
 		// (is it a good idea to override this on every new tab instance?
 		//  but we need to because casperjs does it anyway and logs nothing...)
-		console.log("installing better stack trace")
 		phantom.onError = (msg, trace) => {
 			console.log(`\n${msg}`)
 			if (trace && trace.length)
@@ -154,12 +156,14 @@ class TabDriver {
 			phantom.exit(1)
 		}
 
-		// start the CasperJS wait loop
-		this.casper.start(null, null)
+		// Start the CasperJS wait loop
+		// To forget about this weird system of "steps" that CasperJS has,
+		// we check every 10ms if we need to execute a new action, otherwise we wait()
+		this.__casper.start(null, null)
 		waitLoop = () => {
-			this.casper.wait(10)
-			this.casper.then(() => {
-				if (!this._ended) {
+			this.__casper.wait(10)
+			this.__casper.then(() => {
+				if (!this.__endCallback) {
 					if (this.__nextStep != null) {
 						const step = this.__nextStep
 						this.__nextStep = null
@@ -170,31 +174,43 @@ class TabDriver {
 			})
 		}
 		waitLoop()
-		this.casper.run(() => {
-			if (this._endCallback != null)
-				this._endCallback()
+		this.__casper.run(() => {
+			// executed on close (the wait loop has ended)
+			this.__closed = true
+			this.__endCallback(null)
+			// not so sure about the following lines
+			// the goal is to facilitate GC
+			this.__endCallback = null
+			this.__casper.page.close()
+			delete this.__casper.page
+			this.__casper = null
 		})
 	}
 
-	isClosed() {
-		return this.__ended
-	}
+	// allow the end user to do more specific things by using the driver directly
+	get casper() { return this.__casper }
+
+	get closed() { return this.__closed }
 
 	// this might not need to be a method
 	__addStep(step) {
 		this.__nextStep = step
 	}
 
+	_close(callback) {
+		this.__endCallback = callback
+	}
+
 	_open(url, options, callback) {
 		this.__addStep(() => {
-			this.casper.clear()
+			this.__casper.clear()
 			this.__openState.inProgress = true
 			this.__openState.error = null
 			this.__openState.httpCode = null
 			this.__openState.httpStatus = null
 			this.__openState.url = null
-			this.casper.thenOpen(url, options)
-			this.casper.then(() => {
+			this.__casper.thenOpen(url, options)
+			this.__casper.then(() => {
 				this.__openState.inProgress = false
 				this.__openState.last50Errors = []
 				// we must either have an error or an http code
@@ -217,7 +233,7 @@ class TabDriver {
 		this.__addStep(() => {
 			let err = null
 			try {
-				this.casper.page[method](url)
+				this.__casper.page[method](url)
 			} catch (e) {
 				err = e.toString()
 			}
@@ -241,14 +257,14 @@ class TabDriver {
 							callback(null, null)
 						else {
 							duration -= (Date.now() - start)
-							if (duration < (this.casper.options.retryTimeout * 2))
-								duration = (this.casper.options.retryTimeout * 2)
+							if (duration < (this.__casper.options.retryTimeout * 2))
+								duration = (this.__casper.options.retryTimeout * 2)
 							nextSelector()
 						}
 					}
 					const failure = () =>
 						callback(`waited ${Date.now() - start}ms but element "${selectors[index]}" still ${method.indexOf('While') > 0 ? '' : 'not '}${method.indexOf('Visible') > 0 ? 'visible' : 'present'}`)
-					this.casper[method](selectors[index], success, failure, duration)
+					this.__casper[method](selectors[index], success, failure, duration)
 				}
 			else {
 				let waitedForAll = false
@@ -272,7 +288,7 @@ class TabDriver {
 							nextSelector()
 						}
 					}
-					this.casper[method](selectors[index], success, failure, (this.casper.options.retryTimeout * 2))
+					this.__casper[method](selectors[index], success, failure, (this.__casper.options.retryTimeout * 2))
 				}
 			}
 			nextSelector()

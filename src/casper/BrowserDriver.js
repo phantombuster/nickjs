@@ -7,7 +7,7 @@ class BrowserDriver {
 		if (_.isObject(phantom) && (typeof(phantom.casperPath) === 'string'))
 			this._options = options
 		else
-			throw new Error("it seems we're not in a PhantomJS environment - cannot start CasperJS browser driver")
+			throw new Error("it seems we're not in a PhantomJS+CasperJS environment - cannot start CasperJS browser driver")
 	}
 
 	exit(code) {

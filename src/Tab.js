@@ -10,11 +10,11 @@ class Tab {
 	}
 
 	// Read-only members
-	getNick() { return this._nick }
-	getDriver() { return this._tabDriver } // shorter but less descriptive way to get the tab driver
-	getTabDriver() { return this._tabDriver }
-	actionInProgress() { return this._actionInProgress }
-	isClosed() { return this._tabDriver.isClosed() }
+	get nick() { return this._nick }
+	get driver() { return this._tabDriver } // shorter but less descriptive way to get the tab driver
+	get tabDriver() { return this._tabDriver }
+	get actionInProgress() { return this._actionInProgress }
+	get isClosed() { return this._tabDriver.isClosed() }
 
 	exit(code) {
 		this._nick.exit(code)
@@ -36,6 +36,10 @@ class Tab {
 			action(done(callback))
 		else
 			return Promise.fromCallback((callback) => action(done(callback)), { multiArgs: true })
+	}
+
+	close(callback = null) {
+		return this._callToTabDriver((callback) => this._tabDriver._close(callback), callback)
 	}
 
 	open(url, options = {}, callback = null) {
