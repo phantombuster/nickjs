@@ -14,14 +14,14 @@ class Tab {
 	get driver() { return this._tabDriver } // shorter but less descriptive way to get the tab driver
 	get tabDriver() { return this._tabDriver }
 	get actionInProgress() { return this._actionInProgress }
-	get isClosed() { return this._tabDriver.isClosed() }
+	get closed() { return this._tabDriver.closed }
 
 	exit(code) {
 		this._nick.exit(code)
 	}
 
 	_callToTabDriver(action, callback) {
-		if (this._tabDriver.isClosed())
+		if (this._tabDriver.closed)
 			throw new Error('this tab has finished its work (close() was called) - no other actions can be done with it')
 		if (this._actionInProgress)
 			throw new Error('cannot do this while another tab method is already running - each tab can execute only one action at a time')
