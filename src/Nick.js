@@ -107,14 +107,15 @@ class Nick {
 		else
 			var driver = 'casper'
 
+		this._options = options // TODO deep clone object
+
 		// option checking is finished
 		// initialize the chosen driver
 		if (['casper', 'casperjs'].indexOf(driver) != -1)
-			this._browserDriver = new CasperBrowser(options)
+			this._browserDriver = new CasperBrowser(this._options)
 		else
 			throw new Error(`"${driver}" is an unknown driver`)
 
-		this._options = options
 		this._initialized = false
 		this._initializing = false
 	}
