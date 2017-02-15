@@ -8,9 +8,7 @@
       "polyfill": true,
       "regenerator": true
     }],
-    ["inject-banner", {
-      "bannerCode": "var require = patchRequire(require);"
-    }]
+    "lodash"
   ],
   "comments": false,
   "parserOpts": {

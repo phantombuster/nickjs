@@ -6,8 +6,8 @@
 // See http://docs.casperjs.org/en/latest/writing_modules.html
 // An ugly post-processing is done (after babel) to add this line (see npm scripts)
 
-import * as _ from 'underscore'
-import * as casper from 'casper'
+import _ from 'lodash'
+import casper from 'casper'
 
 class TabDriver {
 
@@ -21,7 +21,7 @@ class TabDriver {
 			colorizerType: 'Dummy',
 			exitOnError: true,
 			silentErrors: false,
-			retryTimeout: 25,http://docs.casperjs.org/en/latest/writing_modules.html
+			retryTimeout: 25,
 			pageSettings: {
 				localToRemoteUrlAccessEnabled: true,
 				webSecurityEnabled: false,
@@ -215,9 +215,10 @@ class TabDriver {
 				this.__openState.last50Errors = []
 				// we must either have an error or an http code
 				// if we dont, no page.resource.received event was never received (we consider this an error except for file:// urls)
-				if ((this.__openState.error != null) || (this.__openState.httpCode != null))
+				if ((this.__openState.error != null) || (this.__openState.httpCode != null)) {
+					console.log("Callback with ", this.__openState.error, this.__openState.httpCode, this.__openState.httpStatus, this.__openState.url)
 					callback(this.__openState.error, this.__openState.httpCode, this.__openState.httpStatus, this.__openState.url)
-				else
+				} else
 					if (url.trim().toLowerCase().indexOf('file://') === 0)
 						// no network requests are made for file:// urls, so we ignore the fact that we did not receive any event
 						callback(null, null, this.__openState.httpStatus, this.__openState.url)

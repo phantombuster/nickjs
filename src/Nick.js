@@ -1,5 +1,5 @@
 import Promise from 'bluebird'
-import * as _ from 'underscore'
+import _ from 'lodash'
 import Tab from './Tab'
 import CasperBrowser from './casper/BrowserDriver'
 
@@ -107,7 +107,7 @@ class Nick {
 		else
 			var driver = 'casper'
 
-		this._options = options // TODO deep clone object
+		this._options = _.cloneDeep(options)
 
 		// option checking is finished
 		// initialize the chosen driver
@@ -125,7 +125,7 @@ class Nick {
 	get browserDriver() { return this._browserDriver }
 	get options() { return this._options }
 
-	exit(code) {
+	exit(code = 0) {
 		this._browserDriver.exit(code)
 	}
 

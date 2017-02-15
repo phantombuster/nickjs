@@ -1,4 +1,4 @@
-import * as _ from 'underscore'
+import _ from 'lodash'
 import TabDriver from './TabDriver'
 
 class BrowserDriver {

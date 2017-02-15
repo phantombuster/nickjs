@@ -10,6 +10,7 @@ nick.initialize().then(() => {
 		tab.open("phantombuster.fr", (err, res) => {
 			console.log("open err: " + err)
 			console.log("open res: " + res)
+			tab.exit()
 		})
 	}).catch((err) => {
 		console.log("catch: " + JSON.stringify(err, undefined, 2))

@@ -1,4 +1,4 @@
-import * as _ from 'underscore'
+import _ from 'lodash'
 import Promise from 'bluebird'
 
 class Tab {
@@ -16,7 +16,7 @@ class Tab {
 	get actionInProgress() { return this._actionInProgress }
 	get closed() { return this._tabDriver.closed }
 
-	exit(code) {
+	exit(code = 0) {
 		this._nick.exit(code)
 	}
 
@@ -25,17 +25,22 @@ class Tab {
 			throw new Error('this tab has finished its work (close() was called) - no other actions can be done with it')
 		if (this._actionInProgress)
 			throw new Error('cannot do this while another tab method is already running - each tab can execute only one action at a time')
-		const done = (callback) => {
+		const getAugmentedCallback = (callback) => {
 			return () => {
+				console.log(JSON.stringify(Array.prototype.slice.call(arguments), undefined, 2));
 				this._actionInProgress = false
-				callback.apply(arguments)
+				callback.apply(null, arguments)
 			}
 		}
 		this._actionInProgress = true
-		if (callback)
-			action(done(callback))
-		else
-			return Promise.fromCallback((callback) => action(done(callback)), { multiArgs: true })
+		if (callback != null) {
+			if (typeof callback !== 'function')
+				throw new TypeError('callback parameter must be of type function')
+			console.log("callback was provided")
+			action(callback)
+			//action(getAugmentedCallback(callback))
+		} else
+			return Promise.fromCallback((callback) => action(getAugmentedCallback(callback)), { multiArgs: true })
 	}
 
 	close(callback = null) {
@@ -45,10 +50,12 @@ class Tab {
 	open(url, options = {}, callback = null) {
 		if (typeof url !== 'string')
 			throw new Error('url parameter must be of type string')
-		if (!_.isObject(options))
-			throw new Error('options parameter must be of type object')
-		if ((callback != null) && (typeof callback !== 'function'))
-			throw new Error('callback parameter must be of type function')
+		if (typeof options === 'function') {
+			callback = options
+			options = {}
+		}
+		if (!_.isPlainObject(options))
+			throw new Error('options parameter must be of type plain object')
 		if (url.indexOf('://') < 0)
 			url = `http://${url}`
 		return this._callToTabDriver((callback) => this._tabDriver._open(url, options, callback), callback)
@@ -57,8 +64,6 @@ class Tab {
 	inject(url, callback = null) {
 		if (typeof url !== 'string')
 			throw new Error('url parameter must be of type string')
-		if ((callback != null) && (typeof callback !== 'function'))
-			throw new Error('callback parameter must be of type function')
 		if ((url.trim().toLowerCase().indexOf('http://') === 0) || (url.trim().toLowerCase().indexOf('https://') === 0))
 			return this._callToTabDriver((callback) => this._tabDriver._injectFromUrl(url, callback), callback)
 		else
