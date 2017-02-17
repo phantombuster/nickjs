@@ -115,7 +115,6 @@ class Nick {
 			this._browserDriver = new CasperBrowser(this._options)
 		else
 			throw new Error(`"${driver}" is an unknown driver`)
-
 		this._initialized = false
 		this._initializing = false
 	}

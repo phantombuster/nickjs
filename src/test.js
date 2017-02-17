@@ -1,9 +1,6 @@
 import Nick from './Nick'
 
-const nick = new Nick({
-	blacklist: [''],
-	userAgent: 'toto'
-})
+const nick = new Nick()
 
 nick.initialize().then(() => {
 	nick.newTab().then((tab) => {

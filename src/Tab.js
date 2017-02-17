@@ -16,10 +16,6 @@ class Tab {
 	get actionInProgress() { return this._actionInProgress }
 	get closed() { return this._tabDriver.closed }
 
-	exit(code = 0) {
-		this._nick.exit(code)
-	}
-
 	_callToTabDriver(action, callback) {
 		if (this._tabDriver.closed)
 			throw new Error('this tab has finished its work (close() was called) - no other actions can be done with it')
@@ -70,13 +66,51 @@ class Tab {
 			return this._callToTabDriver((callback) => this._tabDriver._injectFromDisk(url, callback), callback)
 	}
 
-	waitUntilVisible(selectors, duration, condition, callback) { _callTabDriverWaitMethod('_waitUntilVisible', selectors, duration, condition, callback) }
-	waitWhileVisible(selectors, duration, condition, callback) { _callTabDriverWaitMethod('_waitWhileVisible', selectors, duration, condition, callback) }
-	waitUntilPresent(selectors, duration, condition, callback) { _callTabDriverWaitMethod('_waitUntilPresent', selectors, duration, condition, callback) }
-	waitWhilePresent(selectors, duration, condition, callback) { _callTabDriverWaitMethod('_waitWhilePresent', selectors, duration, condition, callback) }
-	_callTabDriverWaitMethod(method, selectors, duration = 10000, condition = 'and', callback = null) {
+	waitUntilVisible(selectors, duration, condition, callback) { _callTabDriverWaitMethod('_waitUntilVisible', selectors, duration, operator, callback) }
+	waitWhileVisible(selectors, duration, condition, callback) { _callTabDriverWaitMethod('_waitWhileVisible', selectors, duration, operator, callback) }
+	waitUntilPresent(selectors, duration, condition, callback) { _callTabDriverWaitMethod('_waitUntilPresent', selectors, duration, operator, callback) }
+	waitWhilePresent(selectors, duration, condition, callback) { _callTabDriverWaitMethod('_waitWhilePresent', selectors, duration, operator, callback) }
+	_callTabDriverWaitMethod(method, selectors, duration = 10000, operator = 'and', callback = null) {
 		// TODO checks
-		return this._callToTabDriver((callback) => this._tabDriver[method](selectors, duration, condition, callback), callback)
+		return this._callToTabDriver((callback) => this._tabDriver[method](selectors, duration, operator, callback), callback)
+	}
+
+	click(selector, options = {}, callback = null) {
+		if (typeof selector !== 'string')
+			throw new Error('selector parameter must be of type string')
+		if (typeof options === 'function') {
+			callback = options
+			options = {}
+		}
+		if (!_.isPlainObject(options))
+			throw new Error('options parameter must be of type plain object')
+		return this._callToTabDriver((callback) => this._tabDriver._click(selector, options, callback), callback)
+	}
+
+	getUrl(callback = null) {
+		return this._callToTabDriver((callback) => this._tabDriver._getUrl(callback), callback)
+	}
+
+	getContent(callback = null) {
+		return this._callToTabDriver((callback) => this._tabDriver._getContent(callback), callback)
+	}
+
+	fill(selector, params, submit = false, callback = null) {
+		// TODO checks
+		if (typeof submit === 'function') {
+			callback = submit
+			submit = false
+		}
+		return this._callToTabDriver((callback) => this._tabDriver._fill(selector, params, submit, callback), callback)
+	}
+
+	screenshot(filename, params, submit = false, callback = null) {
+		// TODO checks
+		if (typeof submit === 'function') {
+			callback = submit
+			submit = false
+		}
+		return this._callToTabDriver((callback) => this._tabDriver._fill(selector, params, submit, callback), callback)
 	}
 
 }
