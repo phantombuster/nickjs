@@ -7,13 +7,13 @@ class Nick {
 
 	constructor(options = {}) {
 		// begin option checking
-		if (!_.isObject(options))
-			throw new TypeError('options must be an object')
+		if (!_.isPlainObject(options))
+			throw new TypeError('options must be of type plain object')
 
 		// loadImages
 		if (_.has(options, 'loadImages'))
 			if (typeof options.loadImages !== 'boolean')
-				throw new TypeError('loadImages option must be a boolean')
+				throw new TypeError('loadImages option must be of type boolean')
 		else
 			// Note: unlike other options, this one can be absent from the resulting options object
 			// This is to prevent overriding the --load-images CasperJS CLI flag
@@ -22,7 +22,7 @@ class Nick {
 		// userAgent
 		if (_.has(options, 'userAgent'))
 			if (typeof options.userAgent !== 'string')
-				throw new TypeError('userAgent option must be a string')
+				throw new TypeError('userAgent option must be of type string')
 		else
 			options.userAgent = 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.103 Safari/537.36'
 
@@ -50,21 +50,21 @@ class Nick {
 		// printNavigation
 		if (_.has(options, 'printNavigation'))
 			if (typeof options.printNavigation !== 'boolean')
-				throw new TypeError('printNavigation option must be a boolean')
+				throw new TypeError('printNavigation option must be of type boolean')
 		else
 			options.printNavigation = true
 
 		// printPageErrors
 		if (_.has(options, 'printPageErrors'))
 			if (typeof options.printPageErrors !== 'boolean')
-				throw new TypeError('printPageErrors option must be a boolean')
+				throw new TypeError('printPageErrors option must be of type boolean')
 		else
 			options.printPageErrors = true
 
 		// printResourceErrors
 		if (_.has(options, 'printResourceErrors'))
 			if (typeof options.printResourceErrors !== 'boolean')
-				throw new TypeError('printResourceErrors option must be a boolean')
+				throw new TypeError('printResourceErrors option must be of type boolean')
 		else
 			options.printResourceErrors = true
 
@@ -103,7 +103,7 @@ class Nick {
 			if (typeof options.driver === 'string')
 				var driver = options.driver.toLowerCase()
 			else
-				throw new TypeError('driver option must be a string')
+				throw new TypeError('driver option must be of type string')
 		else
 			var driver = 'casper'
 

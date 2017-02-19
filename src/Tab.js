@@ -57,19 +57,10 @@ class Tab {
 		return this._callToTabDriver((callback) => this._tabDriver._open(url, options, callback), callback)
 	}
 
-	inject(url, callback = null) {
-		if (typeof url !== 'string')
-			throw new Error('url parameter must be of type string')
-		if ((url.trim().toLowerCase().indexOf('http://') === 0) || (url.trim().toLowerCase().indexOf('https://') === 0))
-			return this._callToTabDriver((callback) => this._tabDriver._injectFromUrl(url, callback), callback)
-		else
-			return this._callToTabDriver((callback) => this._tabDriver._injectFromDisk(url, callback), callback)
-	}
-
-	waitUntilVisible(selectors, duration, condition, callback) { _callTabDriverWaitMethod('_waitUntilVisible', selectors, duration, operator, callback) }
-	waitWhileVisible(selectors, duration, condition, callback) { _callTabDriverWaitMethod('_waitWhileVisible', selectors, duration, operator, callback) }
-	waitUntilPresent(selectors, duration, condition, callback) { _callTabDriverWaitMethod('_waitUntilPresent', selectors, duration, operator, callback) }
-	waitWhilePresent(selectors, duration, condition, callback) { _callTabDriverWaitMethod('_waitWhilePresent', selectors, duration, operator, callback) }
+	waitUntilVisible(selectors, duration, operator, callback) { _callTabDriverWaitMethod('_waitUntilVisible', selectors, duration, operator, callback) }
+	waitWhileVisible(selectors, duration, operator, callback) { _callTabDriverWaitMethod('_waitWhileVisible', selectors, duration, operator, callback) }
+	waitUntilPresent(selectors, duration, operator, callback) { _callTabDriverWaitMethod('_waitUntilPresent', selectors, duration, operator, callback) }
+	waitWhilePresent(selectors, duration, operator, callback) { _callTabDriverWaitMethod('_waitWhilePresent', selectors, duration, operator, callback) }
 	_callTabDriverWaitMethod(method, selectors, duration = 10000, operator = 'and', callback = null) {
 		// TODO checks
 		return this._callToTabDriver((callback) => this._tabDriver[method](selectors, duration, operator, callback), callback)
@@ -87,6 +78,9 @@ class Tab {
 		return this._callToTabDriver((callback) => this._tabDriver._click(selector, options, callback), callback)
 	}
 
+	evaluate(func, param = {}, callback = null) {
+	}
+
 	getUrl(callback = null) {
 		return this._callToTabDriver((callback) => this._tabDriver._getUrl(callback), callback)
 	}
@@ -95,22 +89,57 @@ class Tab {
 		return this._callToTabDriver((callback) => this._tabDriver._getContent(callback), callback)
 	}
 
-	fill(selector, params, submit = false, callback = null) {
-		// TODO checks
-		if (typeof submit === 'function') {
-			callback = submit
-			submit = false
+	fill(selector, params, options = {}, callback = null) {
+		if (typeof selector !== 'string')
+			throw new Error('selector parameter must be of type string')
+		// TODO check params
+		if (typeof options === 'function') {
+			callback = options
+			options = {}
 		}
+		if (!_.isPlainObject(options))
+			throw new Error('options parameter must be of type plain object')
+		// TODO check options
 		return this._callToTabDriver((callback) => this._tabDriver._fill(selector, params, submit, callback), callback)
 	}
 
-	screenshot(filename, params, submit = false, callback = null) {
+	screenshot(filename, options = {}, callback = null) {
+		if (typeof filename !== 'string')
+			throw new Error('filename parameter must be of type string')
 		// TODO checks
-		if (typeof submit === 'function') {
-			callback = submit
-			submit = false
+		if (typeof options === 'function') {
+			callback = options
+			options = {}
 		}
-		return this._callToTabDriver((callback) => this._tabDriver._fill(selector, params, submit, callback), callback)
+		if (!_.isPlainObject(options))
+			throw new Error('options parameter must be of type plain object')
+		// TODO check options
+		return this._callToTabDriver((callback) => this._tabDriver._screenshot(filename, options, callback), callback)
+	}
+
+	sendKeys(selector, keys, options = {}, callback = null) {
+		if (typeof selector !== 'string')
+			throw new Error('selector parameter must be of type string')
+		if ((typeof keys !== 'string') && (typeof keys !== 'number'))
+			// TODO confirm this check (what's a special key? multiple special keys?)
+			throw new Error('keys parameter must be of type string or number')
+		if (typeof options === 'function') {
+			callback = options
+			options = {}
+		}
+		if (!_.isPlainObject(options))
+			throw new Error('options parameter must be of type plain object')
+		// TODO check options
+		return this._callToTabDriver((callback) => this._tabDriver._sendKeys(selector, keys, options, callback), callback)
+	}
+
+	inject(url, callback = null) {
+		if (typeof url !== 'string')
+			throw new Error('url parameter must be of type string')
+		if ((url.trim().toLowerCase().indexOf('http://') === 0) || (url.trim().toLowerCase().indexOf('https://') === 0))
+			return this._callToTabDriver((callback) => this._tabDriver._injectFromUrl(url, callback), callback)
+		else
+			return this._callToTabDriver((callback) => this._tabDriver._injectFromDisk(url, callback), callback)
 	}
 
 }

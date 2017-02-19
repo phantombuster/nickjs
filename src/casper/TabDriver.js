@@ -163,7 +163,7 @@ class TabDriver {
 		waitLoop = () => {
 			this.__casper.wait(10)
 			this.__casper.then(() => {
-				if (!this.__endCallback) {
+				if (this.__endCallback == null) {
 					if (this.__nextStep != null) {
 						const step = this.__nextStep
 						this.__nextStep = null
@@ -192,17 +192,12 @@ class TabDriver {
 
 	get closed() { return this.__closed }
 
-	// this might not need to be a method
-	__addStep(step) {
-		this.__nextStep = step
-	}
-
 	_close(callback) {
 		this.__endCallback = callback
 	}
 
 	_open(url, options, callback) {
-		this.__addStep(() => {
+		this.__nextStep = () => {
 			this.__casper.clear()
 			this.__openState.inProgress = true
 			this.__openState.error = null
@@ -225,13 +220,13 @@ class TabDriver {
 					else
 						callback('unknown error', null, this.__openState.httpStatus, this.__openState.url)
 			})
-		})
+		}
 	}
 
 	_injectFromDisk(url, callback) { __callCasperInjectMethod('injectJs', url, callback) }
 	_injectFromUrl(url, callback) { __callCasperInjectMethod('includeJs', url, callback) }
 	__callCasperInjectMethod(method, url, callback) {
-		this.__addStep(() => {
+		this.__nextStep = () => {
 			let err = null
 			try {
 				this.__casper.page[method](url)
@@ -239,7 +234,7 @@ class TabDriver {
 				err = e.toString()
 			}
 			callback(err)
-		})
+		}
 	}
 
 	_waitUntilVisible(selectors, duration, condition, callback) { __callCasperWaitMethod('waitUntilVisible', selectors, duration, condition, callback) }
@@ -247,7 +242,7 @@ class TabDriver {
 	_waitUntilPresent(selectors, duration, condition, callback) { __callCasperWaitMethod('waitForSelector', selectors, duration, condition, callback) }
 	_waitWhilePresent(selectors, duration, condition, callback) { __callCasperWaitMethod('waitWhileSelector', selectors, duration, condition, callback) }
 	__callCasperWaitMethod(method, selectors, duration, condition, callback) {
-		this.__addStep(() => {
+		this.__nextStep = () => {
 			const start = Date.now()
 			let index = 0
 			if (condition === 'and')
@@ -293,7 +288,7 @@ class TabDriver {
 				}
 			}
 			nextSelector()
-		})
+		}
 	}
 
 }

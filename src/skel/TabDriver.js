@@ -24,14 +24,6 @@ class TabDriver {
 		// Note: err is a network error, not any >= 400 HTTP request
 	}
 
-	_injectFromDisk(url, callback) {
-		// => callback(err)
-	}
-
-	_injectFromUrl(url, callback) {
-		// => callback(err)
-	}
-
 	_waitUntilVisible(selectors, duration, condition, callback) {
 		// => callback(err, selector)
 	}
@@ -46,6 +38,38 @@ class TabDriver {
 
 	_waitWhilePresent(selectors, duration, condition, callback) {
 		// => callback(err, selector)
+	}
+
+	_click(selector, options, callback) {
+		// => callback(err)
+	}
+
+	_getUrl(callback) {
+		// => callback(err, url)
+	}
+
+	_getContent(callback) {
+		// => callback(err, content)
+	}
+
+	_fill(selector, params, options, callback) {
+		// => callback(err)
+	}
+
+	_screenshot(filename, options, callback) {
+		// => callback(err, path)
+	}
+
+	_sendKeys(selector, keys, options, callback) {
+		// => callback(err)
+	}
+
+	_injectFromDisk(url, callback) {
+		// => callback(err)
+	}
+
+	_injectFromUrl(url, callback) {
+		// => callback(err)
 	}
 
 }
