@@ -20,28 +20,35 @@ class TabDriver {
 	}
 
 	_open(url, options, callback) {
+		// Guarantees:
+		//  - url: string
+		//  - options: plain object TODO describe more
 		// => callback(err, httpCode, httpStatus, url)
 		// Note: err is a network error, not any >= 400 HTTP request
 	}
 
-	_waitUntilVisible(selectors, duration, condition, callback) {
-		// => callback(err, selector)
-	}
-
-	_waitUntilPresent(selectors, duration, condition, callback) {
-		// => callback(err, selector)
-	}
-
-	_waitWhileVisible(selectors, duration, condition, callback) {
-		// => callback(err, selector)
-	}
-
-	_waitWhilePresent(selectors, duration, condition, callback) {
-		// => callback(err, selector)
-	}
+	// Guarantees:
+	//  - selectors: array of strings containing least one string
+	//  - duration: positive number
+	//  - operator: "and" or "or"
+	// => callback(err, selector or null)
+	_waitUntilVisible(selectors, duration, operator, callback) {}
+	_waitUntilPresent(selectors, duration, operator, callback) {}
+	_waitWhileVisible(selectors, duration, operator, callback) {}
+	_waitWhilePresent(selectors, duration, operator, callback) {}
 
 	_click(selector, options, callback) {
+		// Guarantees:
+		//  - selector: string
+		//  - options: plain object TODO describe more
 		// => callback(err)
+	}
+
+	_evaluate(func, arg, callback) {
+		// Guarantees:
+		//  - func: function
+		//  - arg: null or plain object
+		// => callback(err, res or null)
 	}
 
 	_getUrl(callback) {
@@ -53,22 +60,36 @@ class TabDriver {
 	}
 
 	_fill(selector, params, options, callback) {
+		// Guarantees:
+		//  - selector: string
+		// TODO describe other guarantees
 		// => callback(err)
 	}
 
 	_screenshot(filename, options, callback) {
+		// Guarantees:
+		//  - filename: string
+		//  - options: plain object TODO describe more
 		// => callback(err, path)
 	}
 
 	_sendKeys(selector, keys, options, callback) {
+		// Guarantees:
+		//  - selector: string
+		//  - keys: string or number TODO confirm this
+		//  - options: plain object TODO describe more
 		// => callback(err)
 	}
 
 	_injectFromDisk(url, callback) {
+		// Guarantees:
+		//  - url: string
 		// => callback(err)
 	}
 
 	_injectFromUrl(url, callback) {
+		// Guarantees:
+		//  - url: string beginning with http:// or https://
 		// => callback(err)
 	}
 

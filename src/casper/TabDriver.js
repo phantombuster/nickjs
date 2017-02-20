@@ -223,20 +223,6 @@ class TabDriver {
 		}
 	}
 
-	_injectFromDisk(url, callback) { __callCasperInjectMethod('injectJs', url, callback) }
-	_injectFromUrl(url, callback) { __callCasperInjectMethod('includeJs', url, callback) }
-	__callCasperInjectMethod(method, url, callback) {
-		this.__nextStep = () => {
-			let err = null
-			try {
-				this.__casper.page[method](url)
-			} catch (e) {
-				err = e.toString()
-			}
-			callback(err)
-		}
-	}
-
 	_waitUntilVisible(selectors, duration, condition, callback) { __callCasperWaitMethod('waitUntilVisible', selectors, duration, condition, callback) }
 	_waitWhileVisible(selectors, duration, condition, callback) { __callCasperWaitMethod('waitWhileVisible', selectors, duration, condition, callback) }
 	_waitUntilPresent(selectors, duration, condition, callback) { __callCasperWaitMethod('waitForSelector', selectors, duration, condition, callback) }
@@ -288,6 +274,115 @@ class TabDriver {
 				}
 			}
 			nextSelector()
+		}
+	}
+
+	_click(selector, options, callback) {
+		this.__nextStep = () => {
+			try {
+				// TODO use options
+				this.__casper.click(selector)
+				callback(null)
+			} catch (e) {
+				callback(e.toString())
+			}
+		}
+	}
+
+	_evaluate(func, arg, callback) {
+		this.__nextStep = () => {
+			let err = null
+			try {
+				f = (__param, __code) => { // added __ to prevent accidental casperjs parsing of object param
+					cb = (err, res) ->
+						window.__evaluateAsyncFinished = yes
+						window.__evaluateAsyncErr = err
+						window.__evaluateAsyncRes = res
+					try {
+						window.__evaluateAsyncFinished = no
+						window.__evaluateAsyncErr = null
+						window.__evaluateAsyncRes = null
+						eval(`(${__code})`)(__param, cb)
+						return null
+					} catch (e) {
+						return e.toString()
+					}
+				}
+				err = this.__casper.evaluate(f, param, func.toString())
+				if (err != null)
+					err = `in evaluated code (initial call): ${err}`
+			} catch (e) {
+				err = `in casper context (initial call): ${e.toString()}`
+			}
+			if (err != null) {
+				callback(err, null)
+			} else {
+				check = () => {
+					try {
+						res = this.__casper.evaluate () => {
+							return {
+								finished: window.__evaluateAsyncFinished,
+								err: (window.__evaluateAsyncErr != null ? window.__evaluateAsyncErr : undefined), // PhantomJS bug: null gets converted to "", undefined is kept
+								res: (window.__evaluateAsyncRes != null ? window.__evaluateAsyncRes : undefined)
+							}
+						}
+						if (res.finished)
+							callback(res.err != null ? res.err : null
+							callback (if res.err? then res.err else null), (if res.res? then res.res else null)
+						else
+							setTimeout(check, 200)
+					} catch (e) {
+						callback(`in casper context (callback): ${e.toString()}`, null)
+					}
+				}
+				setTimeout(check, 100)
+			}
+		}
+	}
+
+	_getUrl(callback) {
+		this.__nextStep = () => {
+			try {
+				callback(null, this.__casper.getCurrentUrl())
+			} catch (e) {
+				callback(e.toString())
+			}
+		}
+	}
+
+	_getContent(callback) {
+		this.__nextStep = () => {
+			try {
+				callback(null, this.__casper.getPageContent())
+			} catch (e) {
+				callback(e.toString())
+			}
+		}
+	}
+
+	_fill(selector, params, options, callback) {
+		// => callback(err)
+	}
+
+	_screenshot(filename, options, callback) {
+		// => callback(err, path)
+	}
+
+	_sendKeys(selector, keys, options, callback) {
+		// => callback(err)
+	}
+
+	_injectFromDisk(url, callback) { __callCasperInjectMethod('injectJs', url, callback) }
+	_injectFromUrl(url, callback) { __callCasperInjectMethod('includeJs', url, callback) }
+	__callCasperInjectMethod(method, url, callback) {
+		this.__nextStep = () => {
+			let err = null
+			try {
+				this.__casper.page[method](url)
+			} catch (e) {
+				err = e.toString()
+			}
+			callback(err)
 		}
 	}
 
