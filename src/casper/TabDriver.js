@@ -294,10 +294,11 @@ class TabDriver {
 			let err = null
 			try {
 				f = (__param, __code) => { // added __ to prevent accidental casperjs parsing of object param
-					cb = (err, res) ->
+					let cb = (err, res) => {
 						window.__evaluateAsyncFinished = yes
 						window.__evaluateAsyncErr = err
 						window.__evaluateAsyncRes = res
+					}
 					try {
 						window.__evaluateAsyncFinished = no
 						window.__evaluateAsyncErr = null
@@ -319,16 +320,15 @@ class TabDriver {
 			} else {
 				check = () => {
 					try {
-						res = this.__casper.evaluate () => {
+						const res = this.__casper.evaluate(() => {
 							return {
 								finished: window.__evaluateAsyncFinished,
 								err: (window.__evaluateAsyncErr != null ? window.__evaluateAsyncErr : undefined), // PhantomJS bug: null gets converted to "", undefined is kept
 								res: (window.__evaluateAsyncRes != null ? window.__evaluateAsyncRes : undefined)
 							}
-						}
+						})
 						if (res.finished)
-							callback(res.err != null ? res.err : null
-							callback (if res.err? then res.err else null), (if res.res? then res.res else null)
+							callback((res.err === undefined ? null : res.err), (res.res === undefined ? null : res.res))
 						else
 							setTimeout(check, 200)
 					} catch (e) {
