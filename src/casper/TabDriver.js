@@ -47,21 +47,22 @@ class TabDriver {
 			this.__casper.on('resource.requested', (request, net) => {
 				if (options.whitelist.length > 0) {
 					let found = false
-					for (white of options.whitelist)
+					for (white of options.whitelist) {
 						if (typeof white === 'string') {
 							const url = request.url.toLowerCase()
 							if ((url.indexOf(white) === 0) || (url.indexOf(`https://${url}`)) === 0 || (url.indexOf(`http://${url}`) === 0)) {
 								found = true
 								break
 							}
-						}
-						else if (white.test(request.url)) {
+						} else if (white.test(request.url)) {
 							found = true
 							break
 						}
+					}
 					if (!found) {
-						if (options.printAborts)
+						if (options.printAborts) {
 							console.log(`> Aborted (not found in whitelist): ${request.url}`)
+						}
 						return net.abort()
 					}
 				}
@@ -69,22 +70,24 @@ class TabDriver {
 					if (typeof black === 'string') {
 						const url = request.url.toLowerCase()
 						if ((url.indexOf(white) === 0) || (url.indexOf(`https://${url}`)) === 0 || (url.indexOf(`http://${url}`) === 0)) {
-							if (options.printAborts)
+							if (options.printAborts) {
 								console.log(`> Aborted (blacklisted by "${black}"): ${url}`)
+							}
 							return net.abort()
 						}
-					}
-					else if (black.test(request.url)) {
-						if (options.printAborts)
+					} else if (black.test(request.url)) {
+						if (options.printAborts) {
 							console.log(`> Aborted (blacklisted by ${black}): ${request.url}`)
+						}
 						return net.abort()
 					}
 			})
 
 		if (options.printNavigation) {
 			this.__casper.on('navigation.requested', (url, type, isLocked, isMainFrame) => {
-				if (isMainFrame)
+				if (isMainFrame) {
 					console.log(`> Navigation${type !== 'Other' ? ` (${type})` : ''}${isLocked ? '' : ' (not locked)'}: ${url}`)
+				}
 			})
 			this.__casper.on('page.created', (page) => {
 				console.log('> New PhantomJS WebPage created')
@@ -99,11 +102,13 @@ class TabDriver {
 
 		if (options.printResourceErrors)
 			this.__casper.on('resource.error', (err) => {
-				if (err.errorString === 'Protocol "" is unknown') // when a resource is aborted (net.abort()), this error is generated
+				if (err.errorString === 'Protocol "" is unknown') { // when a resource is aborted (net.abort()), this error is generated
 					return
+				}
 				let message = `> Resource error: ${err.status != null ? `${err.status} - ` : ''}${err.statusText != null ? `${err.statusText} - ` : ''}${err.errorString}`
-				if ((typeof(err.url) === 'string') && (message.indexOf(err.url) < 0))
+				if ((typeof(err.url) === 'string') && (message.indexOf(err.url) < 0)) {
 					message += ` (${err.url})`
+				}
 				console.log(message)
 			})
 
@@ -122,8 +127,9 @@ class TabDriver {
 		this.__casper.on('resource.error', (error) => {
 			if (this.__openState.inProgress) {
 				this.__openState.last50Errors.push(error)
-				if (this.__openState.last50Errors.length > 50)
+				if (this.__openState.last50Errors.length > 50) {
 					this.__openState.last50Errors.shift()
+				}
 			}
 		})
 		// this event always arrives after the eventual resource.error events
@@ -132,13 +138,18 @@ class TabDriver {
 			if (this.__openState.inProgress) {
 				if (typeof(resource.status) !== 'number') {
 					this.__openState.error = 'unknown error'
-					if (typeof(resource.id) === 'number')
-						for (let err of this.__openState.last50Errors)
-							if (resource.id === err.id)
-								if (typeof(err.errorString) === 'string')
+					if (typeof(resource.id) === 'number') {
+						for (let err of this.__openState.last50Errors) {
+							if (resource.id === err.id) {
+								if (typeof(err.errorString) === 'string') {
 									this.__openState.error = err.errorString
-				} else
+								}
+							}
+						}
+					}
+				} else {
 					this.__openState.httpCode = resource.status
+				}
 				this.__openState.httpStatus = resource.statusText
 				this.__openState.url = resource.url
 			}
@@ -149,9 +160,11 @@ class TabDriver {
 		//  but we need to because casperjs does it anyway and logs nothing...)
 		phantom.onError = (msg, trace) => {
 			console.log(`\n${msg}`)
-			if (trace && trace.length)
-				for (const f of trace)
+			if (trace && trace.length) {
+				for (const f of trace) {
 					console.log(` at ${f.file || f.sourceURL}:${f.line}${f.function ? ` (in function ${f.function})` : ''}`)
+				}
+			}
 			console.log('')
 			phantom.exit(1)
 		}
@@ -211,44 +224,47 @@ class TabDriver {
 				// we must either have an error or an http code
 				// if we dont, no page.resource.received event was never received (we consider this an error except for file:// urls)
 				if ((this.__openState.error != null) || (this.__openState.httpCode != null)) {
-					console.log("Callback with ", this.__openState.error, this.__openState.httpCode, this.__openState.httpStatus, this.__openState.url)
 					callback(this.__openState.error, this.__openState.httpCode, this.__openState.httpStatus, this.__openState.url)
-				} else
-					if (url.trim().toLowerCase().indexOf('file://') === 0)
+				} else {
+					if (url.trim().toLowerCase().indexOf('file://') === 0) {
 						// no network requests are made for file:// urls, so we ignore the fact that we did not receive any event
 						callback(null, null, this.__openState.httpStatus, this.__openState.url)
-					else
+					} else {
 						callback('unknown error', null, this.__openState.httpStatus, this.__openState.url)
+					}
+				}
 			})
 		}
 	}
 
-	_waitUntilVisible(selectors, duration, condition, callback) { __callCasperWaitMethod('waitUntilVisible', selectors, duration, condition, callback) }
-	_waitWhileVisible(selectors, duration, condition, callback) { __callCasperWaitMethod('waitWhileVisible', selectors, duration, condition, callback) }
-	_waitUntilPresent(selectors, duration, condition, callback) { __callCasperWaitMethod('waitForSelector', selectors, duration, condition, callback) }
-	_waitWhilePresent(selectors, duration, condition, callback) { __callCasperWaitMethod('waitWhileSelector', selectors, duration, condition, callback) }
+	_waitUntilVisible(selectors, duration, condition, callback) { this.__callCasperWaitMethod('waitUntilVisible', selectors, duration, condition, callback) }
+	_waitWhileVisible(selectors, duration, condition, callback) { this.__callCasperWaitMethod('waitWhileVisible', selectors, duration, condition, callback) }
+	_waitUntilPresent(selectors, duration, condition, callback) { this.__callCasperWaitMethod('waitForSelector', selectors, duration, condition, callback) }
+	_waitWhilePresent(selectors, duration, condition, callback) { this.__callCasperWaitMethod('waitWhileSelector', selectors, duration, condition, callback) }
 	__callCasperWaitMethod(method, selectors, duration, condition, callback) {
 		this.__nextStep = () => {
 			const start = Date.now()
 			let index = 0
-			if (condition === 'and')
+			if (condition === 'and') {
 				var nextSelector = () => {
 					const success = () => {
 						++index
-						if (index >= selectors.length)
+						if (index >= selectors.length) {
 							callback(null, null)
-						else {
+						} else {
 							duration -= (Date.now() - start)
-							if (duration < (this.__casper.options.retryTimeout * 2))
+							if (duration < (this.__casper.options.retryTimeout * 2)) {
 								duration = (this.__casper.options.retryTimeout * 2)
+							}
 							nextSelector()
 						}
 					}
-					const failure = () =>
+					const failure = () => {
 						callback(`waited ${Date.now() - start}ms but element "${selectors[index]}" still ${method.indexOf('While') > 0 ? '' : 'not '}${method.indexOf('Visible') > 0 ? 'visible' : 'present'}`)
+					}
 					this.__casper[method](selectors[index], success, failure, duration)
 				}
-			else {
+			} else {
 				let waitedForAll = false
 				var nextSelector = () => {
 					const success = () => {
@@ -257,8 +273,9 @@ class TabDriver {
 					const failure = () => {
 						if (waitedForAll && ((start + duration) < Date.now())) {
 							let elementsToString = selectors.slice()
-							for (let e of elementsToString)
+							for (let e of elementsToString) {
 								e = `"${e}"`
+							}
 							elementsToString = elementsToString.join(', ')
 							callback(`waited ${Date.now() - start}ms but element${selectors.length > 0 ? 's' : ''} ${elementsToString} still ${method.indexOf('While') > 0 ? '' : 'not '}${method.indexOf('Visible') > 0 ? 'visible' : 'present'}`, null)
 						} else {
@@ -293,25 +310,26 @@ class TabDriver {
 		this.__nextStep = () => {
 			let err = null
 			try {
-				f = (__param, __code) => { // added __ to prevent accidental casperjs parsing of object param
+				f = (__arg, __code) => { // added __ to prevent accidental casperjs parsing of object param
 					let cb = (err, res) => {
-						window.__evaluateAsyncFinished = yes
+						window.__evaluateAsyncFinished = true
 						window.__evaluateAsyncErr = err
 						window.__evaluateAsyncRes = res
 					}
 					try {
-						window.__evaluateAsyncFinished = no
+						window.__evaluateAsyncFinished = false
 						window.__evaluateAsyncErr = null
 						window.__evaluateAsyncRes = null
-						eval(`(${__code})`)(__param, cb)
-						return null
+						eval(`(${__code})`)(__arg, cb)
+						return undefined
 					} catch (e) {
 						return e.toString()
 					}
 				}
-				err = this.__casper.evaluate(f, param, func.toString())
-				if (err != null)
+				err = this.__casper.evaluate(f, arg, func.toString())
+				if (err != null) {
 					err = `in evaluated code (initial call): ${err}`
+				}
 			} catch (e) {
 				err = `in casper context (initial call): ${e.toString()}`
 			}
@@ -327,10 +345,11 @@ class TabDriver {
 								res: (window.__evaluateAsyncRes != null ? window.__evaluateAsyncRes : undefined)
 							}
 						})
-						if (res.finished)
+						if (res.finished) {
 							callback((res.err === undefined ? null : res.err), (res.res === undefined ? null : res.res))
-						else
+						} else {
 							setTimeout(check, 200)
+						}
 					} catch (e) {
 						callback(`in casper context (callback): ${e.toString()}`, null)
 					}
@@ -361,28 +380,49 @@ class TabDriver {
 	}
 
 	_fill(selector, params, options, callback) {
-		// => callback(err)
+		this.__nextStep = () => {
+			try {
+				this.__casper.fill(selector, params, options.submit)
+				callback(null)
+			} catch (e) {
+				callback(e.toString())
+			}
+		}
 	}
 
 	_screenshot(filename, options, callback) {
-		// => callback(err, path)
+		this.__nextStep = () => {
+			try {
+				// TODO use options
+				this.__casper.capture(filename)
+				callback(null)
+			} catch (e) {
+				callback(e.toString())
+			}
+		}
 	}
 
 	_sendKeys(selector, keys, options, callback) {
-		// => callback(err)
+		this.__nextStep = () => {
+			try {
+				this.__casper.sendKeys(selector, keys, options)
+				callback(null)
+			} catch (e) {
+				callback(e.toString())
+			}
+		}
 	}
 
-	_injectFromDisk(url, callback) { __callCasperInjectMethod('injectJs', url, callback) }
-	_injectFromUrl(url, callback) { __callCasperInjectMethod('includeJs', url, callback) }
+	_injectFromDisk(url, callback) { this.__callCasperInjectMethod('injectJs', url, callback) }
+	_injectFromUrl(url, callback) { this.__callCasperInjectMethod('includeJs', url, callback) }
 	__callCasperInjectMethod(method, url, callback) {
 		this.__nextStep = () => {
-			let err = null
 			try {
 				this.__casper.page[method](url)
+				callback(null)
 			} catch (e) {
-				err = e.toString()
+				callback(e.toString())
 			}
-			callback(err)
 		}
 	}
 

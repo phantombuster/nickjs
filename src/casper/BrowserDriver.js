@@ -4,10 +4,11 @@ import TabDriver from './TabDriver'
 class BrowserDriver {
 
 	constructor(options) {
-		if (_.isObject(phantom) && (typeof(phantom.casperPath) === 'string'))
+		if (_.isObject(phantom) && (typeof(phantom.casperPath) === 'string')) {
 			this._options = options
-		else
+		} else {
 			throw new Error("it seems we're not in a PhantomJS+CasperJS environment - cannot start CasperJS browser driver")
+		}
 	}
 
 	exit(code) {

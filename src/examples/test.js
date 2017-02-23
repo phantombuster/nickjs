@@ -1,4 +1,4 @@
-import Nick from './Nick'
+import Nick from '../Nick'
 
 const nick = new Nick()
 

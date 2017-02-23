@@ -62,14 +62,24 @@ class TabDriver {
 	_fill(selector, params, options, callback) {
 		// Guarantees:
 		//  - selector: string
-		// TODO describe other guarantees
+		// TODO describe params guarantees
+		//  - options: plain object
+		//		- submit: boolean
 		// => callback(err)
 	}
 
 	_screenshot(filename, options, callback) {
 		// Guarantees:
 		//  - filename: string
-		//  - options: plain object TODO describe more
+		//  - options: plain object
+		//		- format: "jpg", "png", "base64:jpg" or "base64:png"
+		//		- quality: null or number between 1 and 100
+		//		- clipRect: null or plain object
+		//			- top: number
+		//			- left: number
+		//			- width: positive number
+		//			- height: positive number
+		//		- seletor: null or string
 		// => callback(err, path)
 	}
 
