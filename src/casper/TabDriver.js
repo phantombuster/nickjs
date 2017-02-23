@@ -159,7 +159,7 @@ class TabDriver {
 		// better logging of stack trace
 		// (is it a good idea to override this on every new tab instance?
 		//  but we need to because casperjs does it anyway and logs nothing...)
-		phantom.onError = function (msg, trace) {
+		phantom.onError = (msg, trace) => {
 			console.log(`\n${msg}`)
 			if (trace && trace.length) {
 				for (const f of trace) {
