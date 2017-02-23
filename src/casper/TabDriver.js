@@ -38,8 +38,9 @@ class TabDriver {
 
 		// unlike other options, this one can be absent
 		// only set the option if the end user provided it (prevents overriding the --load-images CLI flag)
-		if (_.has(options, 'loadImages'))
+		if (_.has(options, 'loadImages')) {
 			casperOptions.pageSettings.loadImages = options.loadImages
+		}
 
 		this.__casper = casper.create(casperOptions)
 
