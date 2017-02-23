@@ -2,6 +2,8 @@ import Nick from '../Nick'
 
 const nick = new Nick()
 
+console.log(JSON.stringify(nick.options, undefined, 2))
+
 nick.newTab().then(async function(tab) {
 	await tab.open('google.com')
 	await tab.waitUntilVisible(['input[name="q"]', 'form[name="f"]'])
@@ -13,7 +15,7 @@ nick.newTab().then(async function(tab) {
 	await tab.screenshot('google.png')
 
 	const content = await tab.getContent()
-	console.log('The content has ' + content.length + ' bytes')
+	console.log('The content has ' + content.toString().length + ' bytes')
 
 	const url = await tab.getUrl()
 	console.log('The URL is ' + url)

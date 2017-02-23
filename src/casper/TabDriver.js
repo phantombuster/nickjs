@@ -159,7 +159,7 @@ class TabDriver {
 		// better logging of stack trace
 		// (is it a good idea to override this on every new tab instance?
 		//  but we need to because casperjs does it anyway and logs nothing...)
-		phantom.onError = (msg, trace) => {
+		phantom.onError = function (msg, trace) {
 			console.log(`\n${msg}`)
 			if (trace && trace.length) {
 				for (const f of trace) {
@@ -191,7 +191,9 @@ class TabDriver {
 		this.__casper.run(() => {
 			// executed on close (the wait loop has ended)
 			this.__closed = true
-			this.__endCallback(null)
+			if (typeof this.__endCallback === 'function') {
+				this.__endCallback(null)
+			}
 			// not so sure about the following lines
 			// the goal is to facilitate GC
 			this.__endCallback = null
