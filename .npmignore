@@ -1,0 +1,11 @@
+*.swp
+*~
+*.swo
+.DS_Store
+node_modules/
+src/
+.git
+.gitignore
+lib/examples/
+lib/skel/
+lib/.gitignore

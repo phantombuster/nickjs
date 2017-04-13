@@ -1,6 +1,6 @@
 {
   "presets": [
-    "latest"
+    "env"
   ],
   "plugins": [
     ["transform-runtime", {
@@ -10,8 +10,5 @@
     }],
     "lodash"
   ],
-  "comments": false,
-  "parserOpts": {
-    "startLine": 2
-  }
+  "comments": false
 }
