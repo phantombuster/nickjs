@@ -4,7 +4,7 @@ NickJS
 
 A modern headless browser library, as simple as it is powerful.
 
-* 13 methods only ,
+* 13 methods only 
 * Async-await ready (it also works with callbacks)
 * Built to support any driver (today PhantomJS+CasperJS; Chromium headless coming soon)
 
