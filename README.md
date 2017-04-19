@@ -1,6 +1,6 @@
 <p align="center">
   <a href="https://nickjs.org/">
-    <img alt="NickJS logo" src="logo.png">
+    <img alt="NickJS" src="https://raw.githubusercontent.com/phantombuster/nickjs/master/logo.png">
   </a>
 </p>
 
@@ -28,7 +28,7 @@ Feel free to get in touch, suggest pull requests and add your own drivers!
 (Official website coming soon on https://nickjs.org)
 
 The 13 methods
----------
+---
 
 Full documentation on each method is about to be released
 
@@ -48,8 +48,45 @@ Full documentation on each method is about to be released
 .screenshot()
 ```
 
-Running the examples (using the CasperJS+PhantomJS driver)
-------------------------------------------------
+Google search example
+---
+
+    import Nick from '../Nick'
+    const nick = new Nick()
+    
+    nick.newTab().then(async function(tab) {
+        await tab.open('google.com')
+        await tab.waitUntilVisible(['input[name="q"]', 'form[name="f"]'])
+        await tab.fill('form[name="f"]', { q: 'this is just a test' })
+        await tab.sendKeys('form[name="f"]', tab.driver.casper.page.event.key.Enter)
+        await tab.waitUntilVisible('#fbar')
+    
+        console.log('Saving screenshot as google.png...')
+        await tab.screenshot('google.png')
+    
+        const content = await tab.getContent()
+        console.log('The content has ' + content.toString().length + ' bytes')
+    
+        const url = await tab.getUrl()
+        console.log('The URL is ' + url)
+    
+        console.log('Injecting jQuery...')
+        await tab.inject('https://code.jquery.com/jquery-3.1.1.slim.min.js')
+    
+        console.log('Getting the title...')
+        const title = await tab.evaluate((arg, done) => {
+       	    done(null, jQuery('title').text())
+        })
+        console.log('The title is: ' + title)
+    })
+    .then(() => nick.exit())
+    .catch((err) => {
+        console.log('Oops, an error occurred: ' + err)
+        nick.exit(1)
+    })
+
+Running an example (using the CasperJS+PhantomJS driver)
+---
 
     npm install nickjs
     
@@ -60,3 +97,8 @@ Running the examples (using the CasperJS+PhantomJS driver)
     export PHANTOMJS_EXECUTABLE=node_modules/phantomjs-prebuilt/lib/phantom/bin/phantomjs
     
     ./node_modules/casperjs/bin/casperjs node_modules/nickjs/lib/examples/google-search-await.js
+
+Getting started with the CasperJS+PhantomJS driver
+---
+
+Coming soon!
