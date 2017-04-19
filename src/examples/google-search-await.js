@@ -33,6 +33,9 @@ nick.newTab().then(async function(tab) {
 		done(null, jQuery('title').text())
 	})
 	console.log('The title is: ' + title)
+
+	const spread = await tab.open('http://bit.ly/2pem27p')
+	console.log(JSON.stringify(spread, undefined, 2))
 })
 .then(() => nick.exit())
 .catch((err) => {

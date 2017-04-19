@@ -113,6 +113,7 @@ class TabDriver {
 				console.log(message)
 			})
 
+		// maintain a state for monitoring the result of inject/open operations
 		this.__last50Errors = []
 		this.__openInProgress = false
 		this.__injectInProgress = false
@@ -122,6 +123,8 @@ class TabDriver {
 			httpStatus: null,
 			url: null
 		}
+		// when an inject/open is in progress, keep the last errors that occur
+		// we'll iterate through this array to find the corresponding error if necessary
 		this.__casper.on('resource.error', (error) => {
 			if (this.__openInProgress || this.__injectInProgress) {
 				this.__last50Errors.push(error)
@@ -130,6 +133,9 @@ class TabDriver {
 				}
 			}
 		})
+		// when an open is in progress, look for a 'page received' event to know if it was OK or not
+		// if it failed, augment the error with details found in our stored error array
+		// (the open() casperjs call will finish after the event was received)
 		this.__casper.on('page.resource.received', (resource) => {
 			if (this.__openInProgress) {
 				if (typeof(resource.status) !== 'number') {
@@ -150,14 +156,16 @@ class TabDriver {
 				this.__fetchState.url = resource.url
 			}
 		})
+		// when an inject is in progress, look at any 'resource received' event with the corresponding URL
+		// (if the inject has a 3xx redirect, change which URL we monitor)
+		// if the request fails, augment the error with details found in out stored error array
+		// (the includeJs() casperjs call will finish before these event are received)
 		this.__casper.on('resource.received', (resource) => {
 			if (this.__injectInProgress) {
 				if (resource.url === this.__fetchState.url) {
 					if (typeof(resource.redirectURL) === 'string') {
 						this.__fetchState.url = resource.redirectURL
-						console.log('>> Injection got redirected to ' + resource.redirectURL)
 					} else if (resource.stage === 'end') {
-						console.log('>> Received all of the inject script')
 						this.__fetchState.httpCode = resource.status
 						this.__fetchState.httpStatus = resource.statusText
 						this.__fetchState.url = resource.url
@@ -177,8 +185,6 @@ class TabDriver {
 						}
 						this.__injectInProgress = false
 						this.__last50Errors = []
-					} else {
-						console.log('>> Received part of injected script')
 					}
 				}
 			}
@@ -450,7 +456,7 @@ class TabDriver {
 			try {
 				// contrary to includeJs(), injectJs() returns a boolean
 				// try-catch just in case...
-				const ret = this.__casper.page.injectJs(path)
+				var ret = this.__casper.page.injectJs(path)
 			} catch (e) {
 				callback(e.toString())
 				return
@@ -458,7 +464,7 @@ class TabDriver {
 			if (ret) {
 				callback(null)
 			} else {
-				callback(`failed to inject local script "${url}"`)
+				callback(`failed to inject local script "${path}"`)
 			}
 		}
 	}
@@ -483,7 +489,7 @@ class TabDriver {
 				setTimeout(() => {
 					if (this.__injectInProgress) {
 						// add 1s to let the resource timeout by itself and generate a real resource.error event
-						if ((Date.now() - injectStart) > (__casper.page.settings.resourceTimeout + 1000)) {
+						if ((Date.now() - injectStart) > (this.__casper.page.settings.resourceTimeout + 1000)) {
 							callback(`injection of script "${this.__fetchState.url}" timed out after ${Date.now() - injectStart}ms`)
 						} else {
 							waitForInject()
