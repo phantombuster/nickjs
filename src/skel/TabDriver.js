@@ -6,11 +6,12 @@
 
 class TabDriver {
 
-	constructor(options) {
+	constructor(uniqueTabId, options) {
 		// Should initialize the tab driver
 		// This is called from _newTabDriver() in BrowserDriver
 		// If tab initialization is async, the work can be done in _newTabDriver()
 		this.__closed = false
+		this.__uniqueTabId = uniqueTabId
 	}
 
 	get closed() { return this.__closed }

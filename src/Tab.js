@@ -26,7 +26,6 @@ class Tab {
 		const getAugmentedCallback = (callback) => {
 			let that = this
 			return function() {
-				//console.log('Callback args: ' + JSON.stringify(Array.prototype.slice.call(arguments), undefined, 2));
 				that._actionInProgress = false
 				callback.apply(null, arguments)
 			}

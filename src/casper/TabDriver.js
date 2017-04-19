@@ -11,7 +11,8 @@ import casper from 'casper'
 
 class TabDriver {
 
-	constructor(options) {
+	constructor(uniqueTabId, options) {
+		this.__uniqueTabId = uniqueTabId
 		this.__closed = false
 		this.__endCallback = null
 		this.__nextStep = null
@@ -62,7 +63,7 @@ class TabDriver {
 					}
 					if (!found) {
 						if (options.printAborts) {
-							console.log(`> Aborted (not found in whitelist): ${request.url}`)
+							console.log(`> Tab ${this.__uniqueTabId}: Aborted (not found in whitelist): ${request.url}`)
 						}
 						return net.abort()
 					}
@@ -72,13 +73,13 @@ class TabDriver {
 						const url = request.url.toLowerCase()
 						if ((url.indexOf(black) === 0) || (url.indexOf(`https://${url}`)) === 0 || (url.indexOf(`http://${url}`) === 0)) {
 							if (options.printAborts) {
-								console.log(`> Aborted (blacklisted by "${black}"): ${url}`)
+								console.log(`> Tab ${this.__uniqueTabId}: Aborted (blacklisted by "${black}"): ${url}`)
 							}
 							return net.abort()
 						}
 					} else if (black.test(request.url)) {
 						if (options.printAborts) {
-							console.log(`> Aborted (blacklisted by ${black}): ${request.url}`)
+							console.log(`> Tab ${this.__uniqueTabId}: Aborted (blacklisted by ${black}): ${request.url}`)
 						}
 						return net.abort()
 					}
@@ -87,18 +88,18 @@ class TabDriver {
 		if (options.printNavigation) {
 			this.__casper.on('navigation.requested', (url, type, isLocked, isMainFrame) => {
 				if (isMainFrame) {
-					console.log(`> Navigation${type !== 'Other' ? ` (${type})` : ''}${isLocked ? '' : ' (not locked)'}: ${url}`)
+					console.log(`> Tab ${this.__uniqueTabId}: Navigation${type !== 'Other' ? ` (${type})` : ''}${isLocked ? '' : ' (not locked)'}: ${url}`)
 				}
 			})
 			this.__casper.on('page.created', (page) => {
-				console.log('> New PhantomJS WebPage created')
-				page.onResourceTimeout = (request) => console.log(`> Timeout: ${request.url}`)
+				console.log(`> Tab ${this.__uniqueTabId}: New PhantomJS WebPage created`)
+				page.onResourceTimeout = (request) => console.log(`> Tab ${this.__uniqueTabId}: Timeout: ${request.url}`)
 			})
 		}
 
 		if (options.printPageErrors)
 			this.__casper.on('page.error', (err) => {
-				console.log(`> Page JavaScrit error: ${err}`)
+				console.log(`> Tab ${this.__uniqueTabId}: Page JavaScrit error: ${err}`)
 			})
 
 		if (options.printResourceErrors)
@@ -106,7 +107,7 @@ class TabDriver {
 				if (err.errorString === 'Protocol "" is unknown') { // when a resource is aborted (net.abort()), this error is generated
 					return
 				}
-				let message = `> Resource error: ${err.status != null ? `${err.status} - ` : ''}${err.statusText != null ? `${err.statusText} - ` : ''}${err.errorString}`
+				let message = `> Tab ${this.__uniqueTabId}: Resource error: ${err.status != null ? `${err.status} - ` : ''}${err.statusText != null ? `${err.statusText} - ` : ''}${err.errorString}`
 				if ((typeof(err.url) === 'string') && (message.indexOf(err.url) < 0)) {
 					message += ` (${err.url})`
 				}
@@ -208,7 +209,7 @@ class TabDriver {
 		// To forget about this weird system of "steps" that CasperJS has,
 		// we check every 10ms if we need to execute a new action, otherwise we wait()
 		this.__casper.start(null, null)
-		waitLoop = () => {
+		const waitLoop = () => {
 			this.__casper.wait(10)
 			this.__casper.then(() => {
 				if (this.__endCallback == null) {
@@ -231,6 +232,14 @@ class TabDriver {
 			// not so sure about the following lines
 			// the goal is to facilitate GC
 			this.__endCallback = null
+			this.__casper.removeAllListeners('resource.requested')
+			this.__casper.removeAllListeners('navigation.requested')
+			this.__casper.removeAllListeners('page.created')
+			this.__casper.removeAllListeners('page.error')
+			this.__casper.removeAllListeners('resource.error')
+			this.__casper.removeAllListeners('page.resource.received')
+			this.__casper.removeAllListeners('resource.received')
+			this.__casper.page.clearMemoryCache() // this might not be a good idea considering this is not page-specific (seems to clear the whole cache...)
 			this.__casper.page.close()
 			delete this.__casper.page
 			this.__casper = null
@@ -471,16 +480,17 @@ class TabDriver {
 
 	_injectFromUrl(url, callback) {
 		this.__nextStep = () => {
-			this.__fetchState.url = url.trim()
+			this.__injectInProgress = true
+			this.__fetchState.url = url.trim() // minimize the risk of not catching the resource.received event (might need more than a trim())
 			try {
 				// includeJs() seems to return undefined in all cases
 				// try-catch just in case...
 				this.__casper.page.includeJs(this.__fetchState.url)
 			} catch (e) {
+				this.__injectInProgress = false
 				callback(e.toString())
 				return
 			}
-			this.__injectInProgress = true
 			this.__fetchState.error = null
 			this.__fetchState.httpCode = null
 			this.__fetchState.httpStatus = null

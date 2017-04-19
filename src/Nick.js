@@ -153,6 +153,7 @@ class Nick {
 		}
 		this._initialized = false
 		this._initializing = false
+		this._tabIdCounter = 0
 	}
 
 	// Read-only members
@@ -207,7 +208,8 @@ class Nick {
 	newTab(callback = null) {
 		return this.initialize().then(() => {
 			return new Promise((fulfill, reject) => {
-				this._browserDriver._newTabDriver((err, tabDriver) => {
+				++this._tabIdCounter
+				this._browserDriver._newTabDriver(this._tabIdCounter, (err, tabDriver) => {
 					if (err) {
 						reject(err)
 					} else {

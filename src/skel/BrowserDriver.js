@@ -30,11 +30,14 @@ class BrowserDriver {
 		// _newTabDriver() for end user convinience
 	}
 
-	_newTabDriver(callback) {
+	_newTabDriver(uniqueTabId, callback) {
 		// Should initialize a new tab driver with the options
 		// This is used to create a higher-level Nick tab
-		// Basically: new TabDriver(this._options)
+		// Basically: new TabDriver(uniqueId, this._options)
 		// => callback(err, tab)
+
+		// uniqueTabId is just an integer that is incremented for each tab for clearer
+		// logging when multiple tabs are used
 	}
 
 }

@@ -22,8 +22,8 @@ class BrowserDriver {
 		callback(null)
 	}
 
-	_newTabDriver(callback) {
-		callback(null, new TabDriver(this._options))
+	_newTabDriver(uniqueTabId, callback) {
+		callback(null, new TabDriver(uniqueTabId, this._options))
 	}
 
 }
