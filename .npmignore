@@ -2,7 +2,9 @@
 *~
 *.swo
 .DS_Store
-node_modules/
-src/
 .git
 .gitignore
+
+node_modules/
+src/
+logo.png
