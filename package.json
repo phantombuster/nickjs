@@ -36,7 +36,7 @@
     "build-and-fix-casper": "babel --retain-lines src -d lib && sed -i '1s/^/var require = patchRequire(require);/' lib/casper/TabDriver.js",
     "build-and-fix-casper:watch": "while true; do inotifywait -e close_write src/*.js src/*/*.js; npm run build-and-fix-casper; done"
   },
-  "version": "0.0.4",
+  "version": "0.0.5",
   "devDependencies": {
     "babel-cli": "6.24.1",
     "babel-plugin-lodash": "3.2.11",
