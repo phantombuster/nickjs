@@ -1,4 +1,5 @@
 import Nick from '../Nick'
+import Promise from 'bluebird'
 
 const nick = new Nick()
 
@@ -21,7 +22,11 @@ nick.newTab().then(async function(tab) {
 	console.log('The URL is ' + url)
 
 	console.log('Injecting jQuery...')
-	await tab.inject('https://code.jquery.com/jquery-3.1.1.slim.min.js')
+	//await tab.inject('https://code.jquery.com/jquery-3.1.1.slim.min.js')
+	const test = await tab.inject('http://bit.ly/2pem27p')
+	console.log(JSON.stringify(test, undefined, 2))
+	//await tab.inject('toto')
+	//await Promise.delay(5000)
 
 	console.log('Getting the title...')
 	const title = await tab.evaluate((arg, done) => {

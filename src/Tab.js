@@ -114,8 +114,8 @@ class Tab {
 			callback = arg
 			arg = null
 		}
-		if ((arg != null) && !_.isPlainObject(arg)) { // TODO check if an array is a plain object
-			throw new TypeError('arg parameter must be of type plain object')
+		if ((arg != null) && !_.isPlainObject(arg) && !_.isArray(arg)) {
+			throw new TypeError('arg parameter must be a plain object or an array')
 		}
 		return this._callToTabDriver((callback) => { this._tabDriver._evaluate(func, arg, callback) }, callback)
 	}
@@ -189,7 +189,8 @@ class Tab {
 		if (typeof url !== 'string') {
 			throw new TypeError('url parameter must be of type string')
 		}
-		if ((url.trim().toLowerCase().indexOf('http://') === 0) || (url.trim().toLowerCase().indexOf('https://') === 0)) {
+		// a path beginning by file:// is considered a URL and not a local file
+		if ((url.trim().toLowerCase().indexOf('http://') === 0) || (url.trim().toLowerCase().indexOf('https://') === 0) || (url.trim().toLowerCase().indexOf('file://') === 0)) {
 			return this._callToTabDriver((callback) => { this._tabDriver._injectFromUrl(url, callback) }, callback)
 		} else {
 			return this._callToTabDriver((callback) => { this._tabDriver._injectFromDisk(url, callback) }, callback)

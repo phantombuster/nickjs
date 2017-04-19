@@ -48,7 +48,7 @@ class TabDriver {
 			this.__casper.on('resource.requested', (request, net) => {
 				if (options.whitelist.length > 0) {
 					let found = false
-					for (white of options.whitelist) {
+					for (const white of options.whitelist) {
 						if (typeof white === 'string') {
 							const url = request.url.toLowerCase()
 							if ((url.indexOf(white) === 0) || (url.indexOf(`https://${url}`)) === 0 || (url.indexOf(`http://${url}`) === 0)) {
@@ -70,7 +70,7 @@ class TabDriver {
 				for (const black of options.blacklist)
 					if (typeof black === 'string') {
 						const url = request.url.toLowerCase()
-						if ((url.indexOf(white) === 0) || (url.indexOf(`https://${url}`)) === 0 || (url.indexOf(`http://${url}`) === 0)) {
+						if ((url.indexOf(black) === 0) || (url.indexOf(`https://${url}`)) === 0 || (url.indexOf(`http://${url}`) === 0)) {
 							if (options.printAborts) {
 								console.log(`> Aborted (blacklisted by "${black}"): ${url}`)
 							}
@@ -113,46 +113,74 @@ class TabDriver {
 				console.log(message)
 			})
 
-		// open() error detection
-		// it's a LOT of code just to show a relevant error message when open() fails
-		// but it's necessary
-		this.__openState = {
-			inProgress: false,
+		this.__last50Errors = []
+		this.__openInProgress = false
+		this.__injectInProgress = false
+		this.__fetchState = {
 			error: null,
 			httpCode: null,
 			httpStatus: null,
-			url: null,
-			last50Errors: []
+			url: null
 		}
-		// collects errors to get the most important thing: the errorString field
 		this.__casper.on('resource.error', (error) => {
-			if (this.__openState.inProgress) {
-				this.__openState.last50Errors.push(error)
-				if (this.__openState.last50Errors.length > 50) {
-					this.__openState.last50Errors.shift()
+			if (this.__openInProgress || this.__injectInProgress) {
+				this.__last50Errors.push(error)
+				if (this.__last50Errors.length > 50) {
+					this.__last50Errors.shift()
 				}
 			}
 		})
-		// this event always arrives after the eventual resource.error events
-		// so we search back in our history of errors to find the corresponding errorString
 		this.__casper.on('page.resource.received', (resource) => {
-			if (this.__openState.inProgress) {
+			if (this.__openInProgress) {
 				if (typeof(resource.status) !== 'number') {
-					this.__openState.error = 'unknown error'
+					this.__fetchState.error = 'unknown error'
 					if (typeof(resource.id) === 'number') {
-						for (let err of this.__openState.last50Errors) {
+						for (const err of this.__last50Errors) {
 							if (resource.id === err.id) {
 								if (typeof(err.errorString) === 'string') {
-									this.__openState.error = err.errorString
+									this.__fetchState.error = err.errorString
 								}
 							}
 						}
 					}
 				} else {
-					this.__openState.httpCode = resource.status
+					this.__fetchState.httpCode = resource.status
 				}
-				this.__openState.httpStatus = resource.statusText
-				this.__openState.url = resource.url
+				this.__fetchState.httpStatus = resource.statusText
+				this.__fetchState.url = resource.url
+			}
+		})
+		this.__casper.on('resource.received', (resource) => {
+			if (this.__injectInProgress) {
+				if (resource.url === this.__fetchState.url) {
+					if (typeof(resource.redirectURL) === 'string') {
+						this.__fetchState.url = resource.redirectURL
+						console.log('>> Injection got redirected to ' + resource.redirectURL)
+					} else if (resource.stage === 'end') {
+						console.log('>> Received all of the inject script')
+						this.__fetchState.httpCode = resource.status
+						this.__fetchState.httpStatus = resource.statusText
+						this.__fetchState.url = resource.url
+						if (typeof(resource.status) !== 'number') {
+							this.__fetchState.error = 'unknown error'
+							if (typeof(resource.id) === 'number') {
+								for (const err of this.__last50Errors) {
+									if (resource.id === err.id) {
+										if (typeof(err.errorString) === 'string') {
+											this.__fetchState.error = err.errorString
+										}
+									}
+								}
+							}
+						} else if ((resource.status < 200) || (resource.status >= 300)) {
+							this.__fetchState.error = `got HTTP ${resource.status} ${resource.statusText} when downloading ${resource.url}`
+						}
+						this.__injectInProgress = false
+						this.__last50Errors = []
+					} else {
+						console.log('>> Received part of injected script')
+					}
+				}
 			}
 		})
 
@@ -214,26 +242,26 @@ class TabDriver {
 
 	_open(url, options, callback) {
 		this.__nextStep = () => {
-			this.__casper.clear()
-			this.__openState.inProgress = true
-			this.__openState.error = null
-			this.__openState.httpCode = null
-			this.__openState.httpStatus = null
-			this.__openState.url = null
+			this.__casper.clear() // stops the current page from doing anything else (that way if a wait*() is done right after the open(), we're sure of looking on the new page)
+			this.__openInProgress = true
+			this.__fetchState.error = null
+			this.__fetchState.httpCode = null
+			this.__fetchState.httpStatus = null
+			this.__fetchState.url = null
 			this.__casper.thenOpen(url, options)
 			this.__casper.then(() => {
-				this.__openState.inProgress = false
-				this.__openState.last50Errors = []
+				this.__openInProgress = false
+				this.__last50Errors = []
 				// we must either have an error or an http code
 				// if we dont, no page.resource.received event was never received (we consider this an error except for file:// urls)
-				if ((this.__openState.error != null) || (this.__openState.httpCode != null)) {
-					callback(this.__openState.error, this.__openState.httpCode, this.__openState.httpStatus, this.__openState.url)
+				if ((this.__fetchState.error != null) || (this.__fetchState.httpCode != null)) {
+					callback(this.__fetchState.error, this.__fetchState.httpCode, this.__fetchState.httpStatus, this.__fetchState.url)
 				} else {
 					if (url.trim().toLowerCase().indexOf('file://') === 0) {
 						// no network requests are made for file:// urls, so we ignore the fact that we did not receive any event
-						callback(null, null, this.__openState.httpStatus, this.__openState.url)
+						callback(null, null, this.__fetchState.httpStatus, this.__fetchState.url)
 					} else {
-						callback('unknown error', null, this.__openState.httpStatus, this.__openState.url)
+						callback('unknown error', null, this.__fetchState.httpStatus, this.__fetchState.url)
 					}
 				}
 			})
@@ -342,6 +370,7 @@ class TabDriver {
 				check = () => {
 					try {
 						const res = this.__casper.evaluate(() => {
+							// TODO check for res object too complicated for serialization and set err accordingly (jQuery, functions, ...)
 							return {
 								finished: window.__evaluateAsyncFinished,
 								err: (window.__evaluateAsyncErr != null ? window.__evaluateAsyncErr : undefined), // PhantomJS bug: null gets converted to "", undefined is kept
@@ -349,7 +378,7 @@ class TabDriver {
 							}
 						})
 						if (res.finished) {
-							callback((res.err === undefined ? null : res.err), (res.res === undefined ? null : res.res))
+							callback((res.err === undefined ? null : res.err), (res.res === undefined ? null : res.res)) // convert undefined back to null
 						} else {
 							setTimeout(check, 200)
 						}
@@ -416,16 +445,55 @@ class TabDriver {
 		}
 	}
 
-	_injectFromDisk(url, callback) { this.__callCasperInjectMethod('injectJs', url, callback) }
-	_injectFromUrl(url, callback) { this.__callCasperInjectMethod('includeJs', url, callback) }
-	__callCasperInjectMethod(method, url, callback) {
+	_injectFromDisk(path, callback) {
 		this.__nextStep = () => {
 			try {
-				this.__casper.page[method](url)
-				callback(null)
+				// contrary to includeJs(), injectJs() returns a boolean
+				// try-catch just in case...
+				const ret = this.__casper.page.injectJs(path)
 			} catch (e) {
 				callback(e.toString())
+				return
 			}
+			if (ret) {
+				callback(null)
+			} else {
+				callback(`failed to inject local script "${url}"`)
+			}
+		}
+	}
+
+	_injectFromUrl(url, callback) {
+		this.__nextStep = () => {
+			this.__fetchState.url = url.trim()
+			try {
+				// includeJs() seems to return undefined in all cases
+				// try-catch just in case...
+				this.__casper.page.includeJs(this.__fetchState.url)
+			} catch (e) {
+				callback(e.toString())
+				return
+			}
+			this.__injectInProgress = true
+			this.__fetchState.error = null
+			this.__fetchState.httpCode = null
+			this.__fetchState.httpStatus = null
+			const injectStart = Date.now()
+			waitForInject = () => {
+				setTimeout(() => {
+					if (this.__injectInProgress) {
+						// add 1s to let the resource timeout by itself and generate a real resource.error event
+						if ((Date.now() - injectStart) > (__casper.page.settings.resourceTimeout + 1000)) {
+							callback(`injection of script "${this.__fetchState.url}" timed out after ${Date.now() - injectStart}ms`)
+						} else {
+							waitForInject()
+						}
+					} else {
+						callback(this.__fetchState.error, this.__fetchState.httpCode, this.__fetchState.httpStatus, this.__fetchState.url)
+					}
+				}, 100)
+			}
+			waitForInject()
 		}
 	}
 

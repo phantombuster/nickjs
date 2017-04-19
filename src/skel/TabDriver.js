@@ -24,11 +24,12 @@ class TabDriver {
 		//  - url: string
 		//  - options: plain object TODO describe more
 		// => callback(err, httpCode, httpStatus, url)
-		// Note: err is a network error, not any >= 400 HTTP request
+		// Note: err is a network error, the presence of a HTTP code != 200 is not an error
+		// Control must return to the user when TODO
 	}
 
 	// Guarantees:
-	//  - selectors: array of strings containing least one string
+	//  - selectors: array of strings containing at least one string
 	//  - duration: positive number
 	//  - operator: "and" or "or"
 	// => callback(err, selector or null)
@@ -95,12 +96,14 @@ class TabDriver {
 		// Guarantees:
 		//  - url: string
 		// => callback(err)
+		// Control must return to the user when the injected script can immediately be used in an evaluate() call
 	}
 
 	_injectFromUrl(url, callback) {
 		// Guarantees:
 		//  - url: string beginning with http:// or https://
 		// => callback(err)
+		// Control must return to the user when the injected script can immediately be used in an evaluate() call
 	}
 
 }
