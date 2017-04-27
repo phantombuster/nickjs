@@ -1,5 +1,5 @@
 <p align="center">
-  <a href="https://nickjs.org/">
+  <a href="http://nickjs.org/">
     <img alt="NickJS" src="https://raw.githubusercontent.com/phantombuster/nickjs/master/logo.png">
   </a>
 </p>
