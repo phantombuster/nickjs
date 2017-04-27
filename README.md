@@ -25,12 +25,8 @@ We hope you'll enjoy using it and to get the discussion started.
 
 Feel free to get in touch, suggest pull requests and add your own drivers!
 
-(Official website coming soon on https://nickjs.org)
-
 The 13 methods
 ---
-
-Full documentation on each method is about to be released
 
 ```javascript
 .open()
@@ -47,6 +43,8 @@ Full documentation on each method is about to be released
 .sendKeys()
 .screenshot()
 ```
+
+The full documentation is here: https://hub.phantombuster.com/v1/reference#nick-constructor
 
 Google search example
 ---
@@ -87,22 +85,102 @@ nick.newTab().then(async function(tab) {
 })
 ```
 
-Running an example (using the CasperJS+PhantomJS driver)
+Begin a new scraping project using the CasperJS+PhantomJS driver
 ---
 
 ```shell
-npm install nickjs
+mkdir scraping-project
+cd scraping-project/
+npm init -y
 
-npm install casperjs
+# Install NickJS
+npm install nickjs --save
 
-npm install phantomjs-prebuilt
+# Install the CasperJS+PhantomJS driver
+npm install phantomjs-prebuilt@2.1.14 --save
+npm install casperjs@1.1.3 --save
 
+# Make sure CasperJS finds the PhantomJS executable
+# This is just to have our CasperJS+PhantomJS working. It's not related to NickJS
 export PHANTOMJS_EXECUTABLE=node_modules/phantomjs-prebuilt/lib/phantom/bin/phantomjs
 
+# Note: In the following examples, the way NickJS is launched will change in the future
+# (when we'll have our own launcher)
+
+# Test our NickJS project by scraping Google and taking a screenshot
 ./node_modules/casperjs/bin/casperjs node_modules/nickjs/lib/examples/google-search-await.js
+# You should now have a google.png file in your project directory
 ```
 
-Getting started with the CasperJS+PhantomJS driver
----
+Now that you have NickJS and a driver installed and working, you can start coding your own scraping bot.
 
-Coming soon!
+*Step 1:* To use Promises and the async-await capabilities of NickJS, we need to install Babel first (and why not Bluebird to have full-featured Promises):
+
+```shell
+npm install babel-cli --save
+npm install babel-preset-env --save
+npm install babel-plugin-transform-runtime --save
+npm install babel-runtime --save
+npm install bluebird --save
+```
+
+*Step 2*: Prepare the directory structure for our project. `src/` will contain our modern JavaScript code and `lib/` the compiled, "old JS" code:
+
+```shell
+touch .babelrc
+mkdir src
+mkdir lib
+touch src/myNewBot.js
+```
+
+*Step 3:* We'll create a minimal Babel configuration file `.babelrc` at the root of our project. It's just enough to compile modern JavaScript to old JavaScript:
+
+```json
+{
+    "presets": ["env"],
+    "plugins": ["transform-runtime"]
+}
+```
+
+*Step 4:* We'll add two npm scripts to our `package.json` file to facilitate and automate JavaScript compilation:
+
+```json
+    ...
+    "scripts": {
+        "build": "babel --retain-lines src -d lib",
+        "build:watch": "npm run build -- -w",
+    },
+    ...
+```
+
+*Step 5:* We're ready to code our bot:
+
+```shell
+# Code the bot
+$EDITOR src/myNewBot.js
+
+# Compile it to lib/
+npm run build
+
+# Run it with NickJS
+./node_modules/casperjs/bin/casperjs lib/myNewBot.js
+```
+
+Here is an example of a minimal, boilerplate code for starting your bot:
+
+```javascript
+import Nick from 'Nick'
+import Promise from 'bluebird'
+
+const nick = new Nick()
+
+nick.newTab().then(async function(tab) {
+	await tab.open('phantombuster.com')
+	// ...
+})
+.then(() => nick.exit())
+.catch((err) => {
+	console.log('Oops, an error occurred: ' + err)
+	nick.exit(1)
+})
+```
