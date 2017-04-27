@@ -15,7 +15,7 @@
 </p>
 
 <p align="center">
-  <a href="http://nickjs.org">nickjs.org</a>
+  <a href="http://nickjs.org">NickJS.org</a> — <b><a href="https://hub.phantombuster.com/v1/reference#nick">Documentation</a></b>
 </p>
 
 * 13 methods only
@@ -48,7 +48,7 @@ The 13 methods
 .screenshot()
 ```
 
-The full documentation is here: https://hub.phantombuster.com/v1/reference#nick-constructor
+<b><a href="https://hub.phantombuster.com/v1/reference#nick">Full documentation</a></b>
 
 Google search example
 ---
