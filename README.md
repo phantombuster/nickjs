@@ -14,6 +14,10 @@
   <a href="https://twitter.com/phbuster"><img alt="Twitter follow" src="https://img.shields.io/twitter/follow/phbuster.svg?style=social&label=Follow"></a>
 </p>
 
+<p align="center">
+  <a href="http://nickjs.org">nickjs.org</a>
+</p>
+
 * 13 methods only
 * Async-await ready (it also works with callbacks)
 * Built to support any driver (today PhantomJS+CasperJS; Chromium headless coming soon)
@@ -88,7 +92,7 @@ nick.newTab().then(async function(tab) {
 Begin a new scraping project using the CasperJS+PhantomJS driver
 ---
 
-**Step 0:** Create project, install NickJS and its headless browser driver:
+**Step 0:** Create the project, install NickJS and its headless browser driver:
 
 ```shell
 mkdir scraping-project
