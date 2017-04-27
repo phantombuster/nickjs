@@ -54,7 +54,7 @@ Google search example
 ---
 
 ```javascript
-import Nick from '../Nick'
+import Nick from 'nickjs'
 const nick = new Nick()
 
 nick.newTab().then(async function(tab) {
