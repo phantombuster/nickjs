@@ -88,6 +88,8 @@ nick.newTab().then(async function(tab) {
 Begin a new scraping project using the CasperJS+PhantomJS driver
 ---
 
+**Step 0:** Create project, install NickJS and its headless browser driver:
+
 ```shell
 mkdir scraping-project
 cd scraping-project/
@@ -145,12 +147,12 @@ touch src/myNewBot.js
 **Step 4:** We'll add two npm scripts to our `package.json` file to facilitate and automate JavaScript compilation:
 
 ```json
-    ...
+...
     "scripts": {
         "build": "babel --retain-lines src -d lib",
-        "build:watch": "npm run build -- -w",
-    },
-    ...
+        "build:watch": "npm run build -- -w"
+    }
+...
 ```
 
 **Step 5:** We're ready to code our bot:
@@ -172,7 +174,7 @@ npm run build
 Here is an example of a minimal, boilerplate code for starting your bot:
 
 ```javascript
-import Nick from 'Nick'
+import Nick from 'nickjs'
 import Promise from 'bluebird'
 
 const nick = new Nick()
@@ -181,7 +183,7 @@ nick.newTab().then(async function(tab) {
     await tab.open('phantombuster.com')
     // ...
     // Continue here
-    //
+    // ...
 })
 .then(() => nick.exit())
 .catch((err) => {
