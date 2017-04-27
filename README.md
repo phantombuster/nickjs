@@ -104,7 +104,7 @@ npm install casperjs@1.1.3 --save
 # This is just to have our CasperJS+PhantomJS working. It's not related to NickJS
 export PHANTOMJS_EXECUTABLE=node_modules/phantomjs-prebuilt/lib/phantom/bin/phantomjs
 
-# Note: In the following examples, the way NickJS is launched will change in the future
+# Note: In the following example, the way NickJS is launched will change in the future
 # (when we'll have our own launcher)
 
 # Test our NickJS project by scraping Google and taking a screenshot
@@ -114,7 +114,7 @@ export PHANTOMJS_EXECUTABLE=node_modules/phantomjs-prebuilt/lib/phantom/bin/phan
 
 Now that you have NickJS and a driver installed and working, you can start coding your own scraping bot.
 
-*Step 1:* To use Promises and the async-await capabilities of NickJS, we need to install Babel first (and why not Bluebird to have full-featured Promises):
+**Step 1:** To use Promises and the async-await capabilities of NickJS, we need to install Babel first (and why not Bluebird to have full-featured Promises):
 
 ```shell
 npm install babel-cli --save
@@ -124,7 +124,7 @@ npm install babel-runtime --save
 npm install bluebird --save
 ```
 
-*Step 2*: Prepare the directory structure for our project. `src/` will contain our modern JavaScript code and `lib/` the compiled, "old JS" code:
+**Step 2**: Prepare the directory structure for our project. `src/` will contain our modern JavaScript code and `lib/` the compiled, "old JS" code:
 
 ```shell
 touch .babelrc
@@ -133,7 +133,7 @@ mkdir lib
 touch src/myNewBot.js
 ```
 
-*Step 3:* We'll create a minimal Babel configuration file `.babelrc` at the root of our project. It's just enough to compile modern JavaScript to old JavaScript:
+**Step 3:** We'll create a minimal Babel configuration file `.babelrc` at the root of our project. It's just enough to compile modern JavaScript to old JavaScript:
 
 ```json
 {
@@ -142,7 +142,7 @@ touch src/myNewBot.js
 }
 ```
 
-*Step 4:* We'll add two npm scripts to our `package.json` file to facilitate and automate JavaScript compilation:
+**Step 4:** We'll add two npm scripts to our `package.json` file to facilitate and automate JavaScript compilation:
 
 ```json
     ...
@@ -153,14 +153,17 @@ touch src/myNewBot.js
     ...
 ```
 
-*Step 5:* We're ready to code our bot:
+**Step 5:** We're ready to code our bot:
 
 ```shell
 # Code the bot
 $EDITOR src/myNewBot.js
 
-# Compile it to lib/
+# Compile it from src/ to lib/
 npm run build
+
+# Note: In the following example, the way NickJS is launched will change in the future
+# (when we'll have our own launcher)
 
 # Run it with NickJS
 ./node_modules/casperjs/bin/casperjs lib/myNewBot.js
@@ -175,12 +178,14 @@ import Promise from 'bluebird'
 const nick = new Nick()
 
 nick.newTab().then(async function(tab) {
-	await tab.open('phantombuster.com')
-	// ...
+    await tab.open('phantombuster.com')
+    // ...
+    // Continue here
+    //
 })
 .then(() => nick.exit())
 .catch((err) => {
-	console.log('Oops, an error occurred: ' + err)
-	nick.exit(1)
+    console.log('Oops, an error occurred: ' + err)
+    nick.exit(1)
 })
 ```
