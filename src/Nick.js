@@ -93,6 +93,15 @@ class Nick {
 			options.printResourceErrors = true
 		}
 
+		// printAborts
+		if (_.has(options, 'printAborts')) {
+			if (typeof options.printAborts !== 'boolean') {
+				throw new TypeError('printAborts option must be of type boolean')
+			}
+		} else {
+			options.printAborts = true
+		}
+
 		// whitelist
 		const whitelist = []
 		if (_.has(options, 'whitelist')) {
