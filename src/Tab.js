@@ -16,7 +16,7 @@ class Tab {
 	get actionInProgress() { return this._actionInProgress }
 	get closed() { return this._tabDriver.closed }
 
-	_callToTabDriver(action, callback) {
+	_callToTabDriver(action, callback, multiArgs = false) {
 		if (this._tabDriver.closed) {
 			throw new Error('this tab has finished its work (close() was called) - no other actions can be done with it')
 		}
@@ -37,7 +37,7 @@ class Tab {
 			}
 			action(getAugmentedCallback(callback))
 		} else {
-			return Promise.fromCallback((callback) => { action(getAugmentedCallback(callback)) }, { multiArgs: true })
+			return Promise.fromCallback((callback) => { action(getAugmentedCallback(callback)) }, { multiArgs: multiArgs })
 		}
 	}
 
@@ -47,44 +47,60 @@ class Tab {
 
 	open(url, options = {}, callback = null) {
 		if (typeof url !== 'string') {
-			throw new Error('url parameter must be of type string')
+			throw new TypeError('url parameter must be of type string')
 		}
 		if (typeof options === 'function') {
 			callback = options
 			options = {}
 		}
 		if (!_.isPlainObject(options)) {
-			throw new Error('options parameter must be of type plain object')
+			throw new TypeError('options parameter must be of type plain object')
 		}
 		if (url.indexOf('://') < 0) {
 			url = `http://${url}`
 		}
-		return this._callToTabDriver((callback) => { this._tabDriver._open(url, options, callback) }, callback)
+		return this._callToTabDriver((callback) => { this._tabDriver._open(url, options, callback) }, callback, true) // use multiArgs
 	}
 
+	// short variant (made to look pretty when using `await untilVisible()` for example)
+	untilVisible(selectors, duration, operator, callback) { return this._callTabDriverWaitMethod('_waitUntilVisible', selectors, duration, operator, callback) }
+	whileVisible(selectors, duration, operator, callback) { return this._callTabDriverWaitMethod('_waitWhileVisible', selectors, duration, operator, callback) }
+	untilPresent(selectors, duration, operator, callback) { return this._callTabDriverWaitMethod('_waitUntilPresent', selectors, duration, operator, callback) }
+	whilePresent(selectors, duration, operator, callback) { return this._callTabDriverWaitMethod('_waitWhilePresent', selectors, duration, operator, callback) }
+	// standard variant
 	waitUntilVisible(selectors, duration, operator, callback) { return this._callTabDriverWaitMethod('_waitUntilVisible', selectors, duration, operator, callback) }
 	waitWhileVisible(selectors, duration, operator, callback) { return this._callTabDriverWaitMethod('_waitWhileVisible', selectors, duration, operator, callback) }
 	waitUntilPresent(selectors, duration, operator, callback) { return this._callTabDriverWaitMethod('_waitUntilPresent', selectors, duration, operator, callback) }
 	waitWhilePresent(selectors, duration, operator, callback) { return this._callTabDriverWaitMethod('_waitWhilePresent', selectors, duration, operator, callback) }
-	_callTabDriverWaitMethod(method, selectors, duration = 10000, operator = 'and', callback = null) {
+	_callTabDriverWaitMethod(method, selectors, duration = null, operator = null, callback = null) {
 		if (typeof selectors === 'string') {
 			selectors = [selectors]
 		} else if (Array.isArray(selectors)) {
 			if (selectors.length > 0)
 				for (const sel of selectors) {
 					if (typeof sel !== 'string') {
-						throw new TypeError('selectors parameter must be a string or an array of strings')
+						throw new TypeError('selectors parameter must be a string or an array of strings (css paths)')
 					}
 				}
 			else
-				throw new TypeError('selectors parameter must contain at least one string')
+				throw new TypeError('selectors parameter must contain at least one string (css path)')
 		} else {
-			throw new TypeError('selectors parameter must be a string or an array of strings')
+			throw new TypeError('selectors parameter must be a string or an array of strings (css paths)')
 		}
-		if ((typeof duration !== 'number') || (duration <= 0)) {
-			throw new TypeError('selectors parameter must be a positive number')
+		if (typeof duration === 'string') {
+			// allow mix-up of duration and operator parameters
+			const d = duration
+			duration = operator
+			operator = d
 		}
-		if ((operator !== 'and') && (operator !== 'or')) {
+		if (duration === null) {
+			duration = 10000
+		} else if ((typeof duration !== 'number') || (duration <= 0)) {
+			throw new TypeError('duration parameter must be a positive number')
+		}
+		if (operator === null) {
+			operator = 'and'
+		} else if ((operator !== 'and') && (operator !== 'or')) {
 			throw new TypeError('operator parameter must be either "and" or "or"')
 		}
 		return this._callToTabDriver((callback) => { this._tabDriver[method](selectors, duration, operator, callback) }, callback)
@@ -106,6 +122,12 @@ class Tab {
 	}
 
 	evaluate(func, arg = null, callback = null) {
+		if (_.isPlainObject(func)) {
+			// allow mix-up of func and arg parameters
+			const f = func
+			func = arg
+			arg = f
+		}
 		if (typeof func !== 'function') {
 			throw new TypeError('func parameter must be of type function')
 		}
