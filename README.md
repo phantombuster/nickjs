@@ -103,6 +103,9 @@ npm init -y
 # Install NickJS
 npm install nickjs --save
 
+# babel-polyfill is required if we want to run the example scripts
+npm install babel-polyfill --save
+
 # Install the CasperJS+PhantomJS driver
 npm install phantomjs-prebuilt@2.1.14 --save
 npm install casperjs@1.1.3 --save
@@ -124,9 +127,9 @@ Now that you have NickJS and a driver installed and working, you can start codin
 **Step 1:** To use Promises and the async-await capabilities of NickJS, we need to install Babel first (and why not Bluebird to have full-featured Promises):
 
 ```shell
+npm install babel-polyfill --save # you should already have this one if you followed the steps above
 npm install babel-cli --save
 npm install babel-preset-env --save
-npm install babel-polyfill --save
 npm install bluebird --save
 ```
 
@@ -139,12 +142,11 @@ mkdir lib
 touch src/myNewBot.js
 ```
 
-**Step 3:** We'll create a minimal Babel configuration file `.babelrc` at the root of our project. It's just enough to compile modern JavaScript to old JavaScript:
+**Step 3:** We'll create a Babel configuration file `.babelrc` at the root of our project. We exclude some plugins so that `evaluate()` calls work on the pages we're going to scrape/automate.
 
 ```json
 {
 	"retainLines": true,
-	"highlightCode": false,
 	"presets": [
 		["env", {
 			"exclude": [
