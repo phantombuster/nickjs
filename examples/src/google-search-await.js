@@ -1,4 +1,5 @@
-import Nick from '../Nick'
+import 'babel-polyfill'
+import Nick from '../../lib/Nick'
 import Promise from 'bluebird'
 
 const nick = new Nick()

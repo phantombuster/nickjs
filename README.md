@@ -54,6 +54,7 @@ Google search example
 ---
 
 ```javascript
+import 'babel-polyfill'
 import Nick from 'nickjs'
 const nick = new Nick()
 
@@ -114,7 +115,7 @@ export PHANTOMJS_EXECUTABLE=node_modules/phantomjs-prebuilt/lib/phantom/bin/phan
 # (when we'll have our own launcher)
 
 # Test our NickJS project by scraping Google and taking a screenshot
-./node_modules/casperjs/bin/casperjs node_modules/nickjs/lib/examples/google-search-await.js
+./node_modules/casperjs/bin/casperjs node_modules/nickjs/examples/lib/google-search-await.js
 # You should now have a google.png file in your project directory
 ```
 
@@ -125,8 +126,7 @@ Now that you have NickJS and a driver installed and working, you can start codin
 ```shell
 npm install babel-cli --save
 npm install babel-preset-env --save
-npm install babel-plugin-transform-runtime --save
-npm install babel-runtime --save
+npm install babel-polyfill --save
 npm install bluebird --save
 ```
 
@@ -143,8 +143,17 @@ touch src/myNewBot.js
 
 ```json
 {
-    "presets": ["env"],
-    "plugins": ["transform-runtime"]
+	"retainLines": true,
+	"highlightCode": false,
+	"presets": [
+		["env", {
+			"exclude": [
+				"es6.symbol",
+				"transform-es2015-typeof-symbol"
+			],
+			"loose": true
+		}]
+	]
 }
 ```
 
@@ -153,8 +162,8 @@ touch src/myNewBot.js
 ```json
 ...
     "scripts": {
-        "build": "babel --retain-lines src -d lib",
-        "build:watch": "npm run build -- -w"
+        "build": "babel src -d lib",
+        "build:watch": "npm run build -- --watch"
     }
 ...
 ```
@@ -178,13 +187,14 @@ npm run build
 Here is an example of a minimal, boilerplate code for starting your bot:
 
 ```javascript
+import 'babel-polyfill'
 import Nick from 'nickjs'
 import Promise from 'bluebird'
 
 const nick = new Nick()
 
 nick.newTab().then(async function(tab) {
-    await tab.open('phantombuster.com')
+    await tab.open('nickjs.org')
     // ...
     // Continue here
     // ...

@@ -12,6 +12,9 @@
   "homepage": "https://nickjs.org/",
   "keywords": [
     "nick",
+    "nickjs",
+    "chrome",
+    "headless",
     "phantombuster",
     "capserjs",
     "phantomjs"
@@ -31,14 +34,17 @@
   },
   "scripts": {
     "test": "echo \"Error: no test exist\" && exit 1",
-    "build": "babel --retain-lines src -d lib",
-    "build:watch": "npm run build -- -w",
-    "build-and-fix-casper": "babel --retain-lines src -d lib && sed -i '1s/^/var require = patchRequire(require);/' lib/casper/TabDriver.js",
-    "build-and-fix-casper:watch": "while true; do inotifywait -e close_write src/*.js src/*/*.js; npm run build-and-fix-casper; done"
+    "build": "babel src -d lib",
+    "build:watch": "npm run build -- --watch",
+    "build-and-fix-casper": "babel src -d lib && sed -i '1s/^/var require = patchRequire(require);/' lib/casper/TabDriver.js",
+    "build-and-fix-casper:watch": "while true; do inotifywait -e close_write src/*.js src/*/*.js; npm run build-and-fix-casper; done",
+    "build-examples": "babel examples/src -d examples/lib",
+    "build-examples:watch": "npm run build-examples -- --watch"
   },
   "version": "0.0.9",
   "devDependencies": {
     "babel-cli": "6.24.1",
+    "babel-polyfill": "6.23.0",
     "babel-plugin-lodash": "3.2.11",
     "babel-plugin-transform-runtime": "6.23.0",
     "babel-preset-env": "1.3.3"

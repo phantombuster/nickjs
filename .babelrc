@@ -1,14 +1,6 @@
 {
-  "presets": [
-    "env"
-  ],
-  "plugins": [
-    ["transform-runtime", {
-      "helpers": true,
-      "polyfill": true,
-      "regenerator": true
-    }],
-    "lodash"
-  ],
-  "comments": false
+  "retainLines": true,
+  "comments": false,
+  "presets": ["env"],
+  "plugins": ["transform-runtime", "lodash"]
 }
