@@ -41,7 +41,7 @@
     "build-examples": "babel examples/src -d examples/lib",
     "build-examples:watch": "npm run build-examples -- --watch"
   },
-  "version": "0.0.9",
+  "version": "0.0.10",
   "devDependencies": {
     "babel-cli": "6.24.1",
     "babel-polyfill": "6.23.0",
