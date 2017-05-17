@@ -4,8 +4,9 @@
 .DS_Store
 .git
 .gitignore
-
+.babelrc
 node_modules/
 src/
 examples/src/
+examples/.babelrc
 logo.png

@@ -1,36 +1,21 @@
 {
-  "author": {
-    "name": "Martin Tapia",
-    "email": "martin@phantombuster.com",
-    "url": "https://phantombuster.com"
-  },
-  "bugs": {
-    "url": "https://github.com/phantombuster/nickjs/issues",
-    "email": "martin@phantombuster.com"
-  },
+  "name": "nickjs",
+  "version": "0.0.10",
   "description": "Nearly headless Nick",
   "homepage": "https://nickjs.org/",
-  "keywords": [
-    "nick",
-    "nickjs",
-    "chrome",
-    "headless",
-    "phantombuster",
-    "capserjs",
-    "phantomjs"
-  ],
   "license": "ISC",
-  "maintainers": [
-    {
-      "name": "Martin Tapia",
-      "email": "martin@phantombuster.com",
-      "url": "https://phantombuster.com"
-    }
-  ],
-  "name": "nickjs",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/phantombuster/nickjs.git"
+  "main": "lib/Nick.js",
+  "dependencies": {
+    "babel-runtime": "6.23.0",
+    "bluebird": "3.5.0",
+    "lodash": "4.17.4"
+  },
+  "devDependencies": {
+    "babel-cli": "6.24.1",
+    "babel-polyfill": "6.23.0",
+    "babel-plugin-lodash": "3.2.11",
+    "babel-plugin-transform-runtime": "6.23.0",
+    "babel-preset-env": "1.3.3"
   },
   "scripts": {
     "test": "echo \"Error: no test exist\" && exit 1",
@@ -41,18 +26,33 @@
     "build-examples": "babel examples/src -d examples/lib",
     "build-examples:watch": "npm run build-examples -- --watch"
   },
-  "version": "0.0.10",
-  "devDependencies": {
-    "babel-cli": "6.24.1",
-    "babel-polyfill": "6.23.0",
-    "babel-plugin-lodash": "3.2.11",
-    "babel-plugin-transform-runtime": "6.23.0",
-    "babel-preset-env": "1.3.3"
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/phantombuster/nickjs.git"
   },
-  "dependencies": {
-    "babel-runtime": "6.23.0",
-    "bluebird": "3.5.0",
-    "lodash": "4.17.4"
+  "author": {
+    "name": "Martin Tapia",
+    "email": "martin@phantombuster.com",
+    "url": "https://phantombuster.com"
   },
-  "main": "lib/Nick.js"
+  "maintainers": [
+    {
+      "name": "Martin Tapia",
+      "email": "martin@phantombuster.com",
+      "url": "https://phantombuster.com"
+    }
+  ],
+  "bugs": {
+    "url": "https://github.com/phantombuster/nickjs/issues",
+    "email": "martin@phantombuster.com"
+  },
+  "keywords": [
+    "nick",
+    "nickjs",
+    "chrome",
+    "headless",
+    "phantombuster",
+    "capserjs",
+    "phantomjs"
+  ]
 }
