@@ -94,7 +94,7 @@ class Tab {
 			operator = d
 		}
 		if (duration === null) {
-			duration = 10000
+			duration = 5000 // same as the default of CasperJS's waitFor()
 		} else if ((typeof duration !== 'number') || (duration <= 0)) {
 			throw new TypeError('duration parameter must be a positive number')
 		}
