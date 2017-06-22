@@ -23,8 +23,8 @@
     "build:watch": "npm run build -- --watch",
     "build-and-fix-casper": "babel src -d lib && sed -i '1s/^/var require = patchRequire(require);/' lib/casper/TabDriver.js",
     "build-and-fix-casper:watch": "while true; do inotifywait -e close_write src/*.js src/*/*.js; npm run build-and-fix-casper; done",
-    "build-examples": "babel examples/src -d examples/lib",
-    "build-examples:watch": "npm run build-examples -- --watch"
+    "build-examples-casper": "babel examples-casper/src -d examples-casper/lib",
+    "build-examples-casper:watch": "npm run build-examples-casper -- --watch"
   },
   "repository": {
     "type": "git",

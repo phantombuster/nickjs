@@ -1,7 +1,6 @@
-import Promise from 'bluebird'
-import _ from 'lodash'
-import Tab from './Tab'
-import CasperBrowser from './casper/BrowserDriver'
+const Promise = require("bluebird")
+const _ = require("lodash")
+const Tab = require("./Tab")
 
 Promise.onPossiblyUnhandledRejection(function(e, promise) {
 	// TODO do we keep this? what's the best practice?
@@ -156,7 +155,11 @@ class Nick {
 		// option checking is finished
 		// initialize the chosen driver
 		if (['casper', 'casperjs'].indexOf(driver) != -1) {
+			const CasperBrowser = require('./casper/BrowserDriver')
 			this._browserDriver = new CasperBrowser(this._options)
+		} else if (['chrome', 'headlesschrome'].indexOf(driver) != -1) {
+			const ChromeBrowser = require('./chrome/BrowserDriver')
+			this._browserDriver = new ChromeBrowser(this._options)
 		} else {
 			throw new Error(`"${driver}" is an unknown driver`)
 		}
@@ -231,4 +234,4 @@ class Nick {
 
 }
 
-export default Nick
+module.exports = Nick

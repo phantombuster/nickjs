@@ -2,8 +2,8 @@
 // Properties starting with __ are private to the driver
 // Read-only properties should be configured as such
 
-import TabDriver from './TabDriver'
-// import browser-specific things...
+const TabDriver = require("./TabDriver")
+// require browser-specific things...
 
 class BrowserDriver {
 
@@ -42,4 +42,4 @@ class BrowserDriver {
 
 }
 
-export default BrowserDriver
+module.exports = BrowserDriver

@@ -118,7 +118,7 @@ export PHANTOMJS_EXECUTABLE=node_modules/phantomjs-prebuilt/lib/phantom/bin/phan
 # (when we'll have our own launcher)
 
 # Test our NickJS project by scraping Google and taking a screenshot
-./node_modules/casperjs/bin/casperjs node_modules/nickjs/examples/lib/google-search-await.js
+./node_modules/casperjs/bin/casperjs node_modules/nickjs/examples-casper/lib/google-search-await.js
 # You should now have a google.png file in your project directory
 ```
 

@@ -1,5 +1,5 @@
-import _ from 'lodash'
-import Promise from 'bluebird'
+const Promise = require("bluebird")
+const _ = require("lodash")
 
 class Tab {
 
@@ -220,4 +220,4 @@ class Tab {
 
 }
 
-export default Tab
+module.exports = Tab

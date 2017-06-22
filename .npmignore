@@ -7,6 +7,6 @@
 .babelrc
 node_modules/
 src/
-examples/src/
-examples/.babelrc
+examples-casper/src/
+examples-casper/.babelrc
 logo.png

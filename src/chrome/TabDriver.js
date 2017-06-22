@@ -1,18 +1,35 @@
 // Properties starting with _ are meant for the higher-level Nick tab
 // Properties starting with __ are private to the driver
-// Read-only properties should be configured as such
-
-// require tab-specific things...
 
 class TabDriver {
 
-	constructor(uniqueTabId, options) {
-		// Should initialize the tab driver
-		// This is called from _newTabDriver() in BrowserDriver
-		// If tab initialization is async, the work can be done in _newTabDriver()
+	constructor(uniqueTabId, options, client) {
 		this.__closed = false
 		this.__uniqueTabId = uniqueTabId
+		this.__client = client
+
+		this.__client.Page.domContentEventFired((e) => {
+			console.log("domContentEventFired: " + JSON.stringify(e, undefined, 2))
+		})
+		this.__client.Page.loadEventFired((e) => {
+			console.log("loadEventFired: " + JSON.stringify(e, undefined, 2))
+		})
+		this.__client.Page.frameStartedLoading((e) => {
+			console.log("frameStartedLoading: " + JSON.stringify(e, undefined, 2))
+		})
+		this.__client.Page.frameStoppedLoading((e) => {
+			console.log("frameStoppedLoading: " + JSON.stringify(e, undefined, 2))
+		})
+		this.__client.Network.responseReceived((e) => {
+			console.log("responseReceived: " + e.response.status + " " + e.response.url)
+		})
+		this.__client.Page.frameNavigated((e) => {
+			console.log("frameNavigated: " + JSON.stringify(e, undefined, 2))
+		})
 	}
+
+	// allow the end user to do more specific things by using the driver directly
+	get client() { return this.__client }
 
 	get closed() { return this.__closed }
 
@@ -21,12 +38,14 @@ class TabDriver {
 	}
 
 	_open(url, options, callback) {
-		// Guarantees:
-		//  - url: string
-		//  - options: plain object TODO describe more
-		// => callback(err, httpCode, httpStatus, url)
-		// Note: err is a network error, the presence of a HTTP code != 200 is not an error
-		// Control must return to the user when TODO
+		this.__client.Page.navigate({ url: url }, (err, res) => {
+			if (err) {
+				callback(err)
+			} else {
+				console.log(JSON.stringify(res, undefined, 2))
+				callback(null)
+			}
+		})
 	}
 
 	// Guarantees:
