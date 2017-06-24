@@ -8,23 +8,33 @@ class TabDriver {
 		this.__uniqueTabId = uniqueTabId
 		this.__client = client
 
+		this.__client.Security.certificateError((e) => {
+			Security.handleCertificateError({
+				eventId: e.eventId,
+				action: 'continue'
+			});
+		});
+
 		this.__client.Page.domContentEventFired((e) => {
-			console.log("domContentEventFired: " + JSON.stringify(e, undefined, 2))
+			console.log("-- domContentEventFired: " + JSON.stringify(e, undefined, 2))
 		})
 		this.__client.Page.loadEventFired((e) => {
-			console.log("loadEventFired: " + JSON.stringify(e, undefined, 2))
+			console.log("-- loadEventFired: " + JSON.stringify(e, undefined, 2))
 		})
 		this.__client.Page.frameStartedLoading((e) => {
-			console.log("frameStartedLoading: " + JSON.stringify(e, undefined, 2))
+			console.log("-- frameStartedLoading: " + JSON.stringify(e, undefined, 2))
 		})
 		this.__client.Page.frameStoppedLoading((e) => {
-			console.log("frameStoppedLoading: " + JSON.stringify(e, undefined, 2))
+			console.log("-- frameStoppedLoading: " + JSON.stringify(e, undefined, 2))
 		})
 		this.__client.Network.responseReceived((e) => {
-			console.log("responseReceived: " + e.response.status + " " + e.response.url)
+			console.log(`-- responseReceived: ${e.response.status} (type: ${e.type}, frameId: ${e.frameId}, loaderId: ${e.loaderId}) ${e.response.url}`)
 		})
 		this.__client.Page.frameNavigated((e) => {
-			console.log("frameNavigated: " + JSON.stringify(e, undefined, 2))
+			console.log("-- frameNavigated: " + JSON.stringify(e, undefined, 2))
+		})
+		this.__client.Runtime.consoleAPICalled((e) => {
+			console.log("-- consoleAPICalled: " + JSON.stringify(e, undefined, 2))
 		})
 	}
 
@@ -38,12 +48,31 @@ class TabDriver {
 	}
 
 	_open(url, options, callback) {
+		// TODO handle options (POST etc)
 		this.__client.Page.navigate({ url: url }, (err, res) => {
 			if (err) {
 				callback(err)
 			} else {
-				console.log(JSON.stringify(res, undefined, 2))
-				callback(null)
+				const frameId = res.frameId
+				let status = null
+				let statusText = null
+				let newUrl = null
+				const responseReceived = (e) => {
+					if (e.frameId === frameId) {
+						status = e.response.status
+						statusText = e.response.statusText
+					}
+				}
+				this.__client.on("Network.responseReceived", responseReceived)
+				const frameNavigated = (e) => {
+					if (e.frame.id === frameId) {
+						newUrl = e.frame.url
+						this.__client.removeListener("Network.responseReceived", responseReceived)
+						this.__client.removeListener("Page.frameNavigated", frameNavigated)
+						callback(null, status, statusText, newUrl)
+					}
+				}
+				this.__client.on("Page.frameNavigated", frameNavigated)
 			}
 		})
 	}
@@ -53,10 +82,67 @@ class TabDriver {
 	//  - duration: positive number
 	//  - operator: "and" or "or"
 	// => callback(err, selector or null)
-	_waitUntilVisible(selectors, duration, operator, callback) {}
-	_waitUntilPresent(selectors, duration, operator, callback) {}
-	_waitWhileVisible(selectors, duration, operator, callback) {}
-	_waitWhilePresent(selectors, duration, operator, callback) {}
+	_waitUntilVisible(selectors, duration, operator, callback) { this.__callWaitMethod('until visible', selectors, duration, operator, callback) }
+	_waitWhileVisible(selectors, duration, operator, callback) { this.__callWaitMethod('while visible', selectors, duration, operator, callback) }
+	_waitUntilPresent(selectors, duration, operator, callback) { this.__callWaitMethod('until present', selectors, duration, operator, callback) }
+	_waitWhilePresent(selectors, duration, operator, callback) { this.__callWaitMethod('while present', selectors, duration, operator, callback) }
+	__callWaitMethod(method, selectors, duration, operator, callback) {
+		const wait = (method, selectors, duration, operator) => {
+			selectorIsPresent = (selector, inverse) => {
+				const ret = document.querySelector(selector) != null
+				return inverse ? !ret : ret
+			}
+			selectorIsVisible = (selector, inverse) => {
+				let ret = false
+				for (const element of document.querySelectorAll(selector)) {
+					const style = window.getComputedStyle(element)
+					if ((style.visibility !== 'hidden') && (style.display !== 'none')) {
+						const rect = element.getBoundingClientRect()
+						if ((rect.width > 0) && (rect.height > 0)) {
+							ret = true
+							break
+						}
+					}
+				}
+				return inverse ? !ret : ret
+			}
+			switch (method)	{
+				case 'until visible':
+					method = (selector) => {}
+					break
+				case 'while visible':
+					method = (selector) => {}
+					break
+			}
+			return new Promise((fulfill, reject) => {
+				const start = Date.now()
+				let index = 0
+				if (operator === "and") {
+					var nextSelector = () => {
+						if (method(selectors[index])) {
+						} else {
+							reject(`waited ${Date.now() - start}ms but element "${selectors[index]}" still ${method.indexOf('while') > 0 ? '' : 'not '}${method.indexOf('visible') > 0 ? 'visible' : 'present'}`
+						}
+					}
+				} else {
+				}
+				nextSelector()
+			})
+		}
+		const payload = {
+			expression: `(${wait})("${method}", ${JSON.stringify(selectors)}, ${duration}, "${operator}")`,
+			awaitPromise: true,
+			returnByValue: true
+		}
+		this.__client.Runtime.evaluate(payload, (err, res) => {
+			if (err) {
+				callback(err)
+			} else {
+				console.log(`evaluate result: ${JSON.stringify(res, undefined, 2)}`)
+				callback(null, null)
+			}
+		})
+	}
 
 	_click(selector, options, callback) {
 		// Guarantees:

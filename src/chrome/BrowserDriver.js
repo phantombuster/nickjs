@@ -44,6 +44,7 @@ class BrowserDriver {
 			`--window-size=${this._options.width},${this._options.height}`,
 			"--disable-gpu",
 			"--headless",
+			"--disable-web-security",
 			"--remote-debugging-port=9222"
 		])
 		process.on('exit', () => {
@@ -58,11 +59,15 @@ class BrowserDriver {
 			CDP({ target: tab }, (client) => {
 				Promise.all([
 					client.Page.enable(),
-					client.Network.enable()
-				]).then(() =>
+					client.Network.enable(),
+					client.Runtime.enable(),
+					client.Security.enable()
+				]).then(() => {
+					return client.Security.setOverrideCertificateErrors({override: true})
+				}).then(() => {
 					callback(null, new TabDriver(uniqueTabId, this._options, client))
-				).catch((err) => {
-					callback(`could not enable protocol domains: ${err}`)
+				}).catch((err) => {
+					callback(`error when initializing tab: ${err}`)
 				})
 			}).on('error', (err) => {
 				callback(`cannot connect to tab: ${err}`)
