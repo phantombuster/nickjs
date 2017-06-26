@@ -97,12 +97,13 @@ class TabDriver {
 			})
 		}
 
-		if (options.printPageErrors)
+		if (options.printPageErrors) {
 			this.__casper.on('page.error', (err) => {
 				console.log(`> Tab ${this.__uniqueTabId}: Page JavaScrit error: ${err}`)
 			})
+		}
 
-		if (options.printResourceErrors)
+		if (options.printResourceErrors) {
 			this.__casper.on('resource.error', (err) => {
 				if (err.errorString === 'Protocol "" is unknown') { // when a resource is aborted (net.abort()), this error is generated
 					return
@@ -113,6 +114,7 @@ class TabDriver {
 				}
 				console.log(message)
 			})
+		}
 
 		// maintain a state for monitoring the result of inject/open operations
 		this.__last50Errors = []

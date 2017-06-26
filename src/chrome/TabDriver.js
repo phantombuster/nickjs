@@ -1,6 +1,8 @@
 // Properties starting with _ are meant for the higher-level Nick tab
 // Properties starting with __ are private to the driver
 
+const _ = require('lodash')
+
 class TabDriver {
 
 	constructor(uniqueTabId, options, client) {
@@ -15,27 +17,35 @@ class TabDriver {
 			});
 		});
 
-		this.__client.Page.domContentEventFired((e) => {
-			console.log("-- domContentEventFired: " + JSON.stringify(e, undefined, 2))
-		})
-		this.__client.Page.loadEventFired((e) => {
-			console.log("-- loadEventFired: " + JSON.stringify(e, undefined, 2))
-		})
-		this.__client.Page.frameStartedLoading((e) => {
-			console.log("-- frameStartedLoading: " + JSON.stringify(e, undefined, 2))
-		})
-		this.__client.Page.frameStoppedLoading((e) => {
-			console.log("-- frameStoppedLoading: " + JSON.stringify(e, undefined, 2))
-		})
-		this.__client.Network.responseReceived((e) => {
-			console.log(`-- responseReceived: ${e.response.status} (type: ${e.type}, frameId: ${e.frameId}, loaderId: ${e.loaderId}) ${e.response.url}`)
-		})
-		this.__client.Page.frameNavigated((e) => {
-			console.log("-- frameNavigated: " + JSON.stringify(e, undefined, 2))
-		})
+		//this.__client.Page.domContentEventFired((e) => {
+		//	console.log("-- domContentEventFired: " + JSON.stringify(e, undefined, 2))
+		//})
+		//this.__client.Page.loadEventFired((e) => {
+		//	console.log("-- loadEventFired: " + JSON.stringify(e, undefined, 2))
+		//})
+		//this.__client.Page.frameStartedLoading((e) => {
+		//	console.log("-- frameStartedLoading: " + JSON.stringify(e, undefined, 2))
+		//})
+		//this.__client.Page.frameStoppedLoading((e) => {
+		//	console.log("-- frameStoppedLoading: " + JSON.stringify(e, undefined, 2))
+		//})
+		//this.__client.Network.responseReceived((e) => {
+		//	console.log(`-- responseReceived: ${e.response.status} (type: ${e.type}, frameId: ${e.frameId}, loaderId: ${e.loaderId}) ${e.response.url}`)
+		//})
+		//this.__client.Page.frameNavigated((e) => {
+		//	console.log("-- frameNavigated: " + JSON.stringify(e, undefined, 2))
+		//})
 		this.__client.Runtime.consoleAPICalled((e) => {
-			console.log("-- consoleAPICalled: " + JSON.stringify(e, undefined, 2))
+			// TODO process all args
+			console.log(`> Tab ${this.__uniqueTabId}: Console message: ${e.args[0].value}`)
 		})
+
+		if (options.printPageErrors) {
+			// TODO check this is working
+			this.__client.Runtime.exceptionThrown((e) => {
+				console.log(`> Tab ${this.__uniqueTabId}: Page JavaScript error: ${e.exceptionDetails.text}`)
+			})
+		}
 	}
 
 	// allow the end user to do more specific things by using the driver directly
@@ -82,84 +92,172 @@ class TabDriver {
 	//  - duration: positive number
 	//  - operator: "and" or "or"
 	// => callback(err, selector or null)
-	_waitUntilVisible(selectors, duration, operator, callback) { this.__callWaitMethod('until visible', selectors, duration, operator, callback) }
-	_waitWhileVisible(selectors, duration, operator, callback) { this.__callWaitMethod('while visible', selectors, duration, operator, callback) }
-	_waitUntilPresent(selectors, duration, operator, callback) { this.__callWaitMethod('until present', selectors, duration, operator, callback) }
-	_waitWhilePresent(selectors, duration, operator, callback) { this.__callWaitMethod('while present', selectors, duration, operator, callback) }
-	__callWaitMethod(method, selectors, duration, operator, callback) {
-		const wait = (method, selectors, duration, operator) => {
-			selectorIsPresent = (selector, inverse) => {
-				const ret = document.querySelector(selector) != null
-				return inverse ? !ret : ret
-			}
-			selectorIsVisible = (selector, inverse) => {
-				let ret = false
-				for (const element of document.querySelectorAll(selector)) {
-					const style = window.getComputedStyle(element)
-					if ((style.visibility !== 'hidden') && (style.display !== 'none')) {
-						const rect = element.getBoundingClientRect()
-						if ((rect.width > 0) && (rect.height > 0)) {
-							ret = true
-							break
+	_waitUntilVisible(selectors, duration, operator, callback) { this.__callWaitMethod('until', 'visible', selectors, duration, operator, callback) }
+	_waitWhileVisible(selectors, duration, operator, callback) { this.__callWaitMethod('while', 'visible', selectors, duration, operator, callback) }
+	_waitUntilPresent(selectors, duration, operator, callback) { this.__callWaitMethod('until', 'present', selectors, duration, operator, callback) }
+	_waitWhilePresent(selectors, duration, operator, callback) { this.__callWaitMethod('while', 'present', selectors, duration, operator, callback) }
+	__callWaitMethod(waitType, visType, selectors, duration, operator, callback) {
+		const wait = (waitType, visType, selectors, duration, operator) => {
+			if (visType === 'visible') {
+				var selectorMatches = (selector) => {
+					let ret = false
+					for (const element of document.querySelectorAll(selector)) {
+						const style = window.getComputedStyle(element)
+						if ((style.visibility !== 'hidden') && (style.display !== 'none')) {
+							const rect = element.getBoundingClientRect()
+							if ((rect.width > 0) && (rect.height > 0)) {
+								ret = true
+								break
+							}
 						}
 					}
+					return waitType === 'while' ? !ret : ret
 				}
-				return inverse ? !ret : ret
-			}
-			switch (method)	{
-				case 'until visible':
-					method = (selector) => {}
-					break
-				case 'while visible':
-					method = (selector) => {}
-					break
+			} else {
+				var selectorMatches = (selector) => {
+					const ret = document.querySelector(selector) != null
+					return waitType === 'while' ? !ret : ret
+				}
 			}
 			return new Promise((fulfill, reject) => {
 				const start = Date.now()
-				let index = 0
 				if (operator === "and") {
-					var nextSelector = () => {
-						if (method(selectors[index])) {
+					const waitForAll = () => {
+						let invalidSelector = null
+						for (const sel of selectors) {
+							if (!selectorMatches(sel)) {
+								console.log("+++ Missing selector: " + sel, 1234)
+								invalidSelector = sel
+								break
+							}
+						}
+						if (invalidSelector) {
+							if ((start + duration) < Date.now()) {
+								reject(`waited ${Date.now() - start}ms but element "${invalidSelector}" still ${waitType === 'while' ? '' : 'not '}${visType}`)
+							} else {
+								setTimeout((() => waitForAll()), 500)
+							}
 						} else {
-							reject(`waited ${Date.now() - start}ms but element "${selectors[index]}" still ${method.indexOf('while') > 0 ? '' : 'not '}${method.indexOf('visible') > 0 ? 'visible' : 'present'}`
+							console.log("+++ All selectors found")
+							fulfill()
 						}
 					}
+					waitForAll()
 				} else {
+					const waitForOne = () => {
+						let firstMatch = null
+						for (const sel of selectors) {
+							if (selectorMatches(sel)) {
+								firstMatch = sel
+								console.log("+++ Found one: " + sel)
+								break
+							}
+						}
+						if (firstMatch) {
+							fulfill(firstMatch)
+						} else {
+							if ((start + duration) < Date.now()) {
+								let elementsToString = selectors.slice()
+								for (let e of elementsToString) {
+									e = `"${e}"`
+								}
+								elementsToString = elementsToString.join(', ')
+								reject(`waited ${Date.now() - start}ms but element${selectors.length > 0 ? 's' : ''} ${elementsToString} still ${waitType === 'while' ? '' : 'not '}${visType}`)
+							} else {
+								console.log("+++ Did not find any, retrying")
+								setTimeout((() => waitForOne()), 500)
+							}
+						}
+					}
+					waitForOne()
 				}
-				nextSelector()
 			})
 		}
 		const payload = {
-			expression: `(${wait})("${method}", ${JSON.stringify(selectors)}, ${duration}, "${operator}")`,
+			expression: `(${wait})("${waitType}", "${visType}", ${JSON.stringify(selectors)}, ${duration}, "${operator}")`,
 			awaitPromise: true,
-			returnByValue: true
+			returnByValue: true,
+			silent: true
 		}
 		this.__client.Runtime.evaluate(payload, (err, res) => {
 			if (err) {
 				callback(err)
 			} else {
-				console.log(`evaluate result: ${JSON.stringify(res, undefined, 2)}`)
+				//console.log(`evaluate result: ${JSON.stringify(res, undefined, 2)}`)
 				callback(null, null)
 			}
 		})
 	}
 
 	_click(selector, options, callback) {
-		// Guarantees:
-		//  - selector: string
-		//  - options: plain object TODO describe more
-		// => callback(err)
+		// TODO use options
+		const click = (selector) => {
+			const target = document.querySelector(selector)
+			if (target) {
+				const evt = new MouseEvent("click", {
+					bubbles: true,
+					cancelable: true,
+					view: window,
+					detail: 1,
+					//screenX: 1,
+					//screenY: 1,
+				})
+			} else {
+				throw 'cannot find selector'
+			}
+		}
+		const payload = {
+			expression: `(${click})(${JSON.stringify(selector)})`,
+			returnByValue: true,
+			silent: true
+		}
+		this.__client.Runtime.evaluate(payload, (err) => {
+			callback(err)
+		})
 	}
 
 	_evaluate(func, arg, callback) {
-		// Guarantees:
-		//  - func: function
-		//  - arg: null or plain object
-		// => callback(err, res or null)
+		const runEval = (func, arg) => {
+			return new Promise((fulfill, reject) => {
+				done = (err, res) => {
+					if (err) {
+						reject(err)
+					} else {
+						fulfill(res)
+					}
+				}
+				func(arg, done)
+			})
+		}
+		const payload = {
+			expression: `(${runEval})((${func}), ${JSON.stringify(arg)})`,
+			awaitPromise: true,
+			returnByValue: true,
+			silent: true
+		}
+		this.__client.Runtime.evaluate(payload, (err, res) => {
+			if (err) {
+				callback(err)
+			} else {
+				console.log(`evaluate result: ${JSON.stringify(res, undefined, 2)}`)
+				callback(null, res.result.value)
+			}
+		})
 	}
 
 	_getUrl(callback) {
-		// => callback(err, url)
+		const payload = {
+			expression: "window.location.href",
+			returnByValue: true,
+			silent: true
+		}
+		this.__client.Runtime.evaluate(payload, (err, res) => {
+			if (err) {
+				callback(err)
+			} else {
+				callback(null, res.result.value)
+			}
+		})
 	}
 
 	_getContent(callback) {
