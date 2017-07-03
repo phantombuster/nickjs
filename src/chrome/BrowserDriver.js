@@ -65,7 +65,7 @@ class BrowserDriver {
 				]).then(() => {
 					return client.Security.setOverrideCertificateErrors({override: true})
 				}).then(() => {
-					callback(null, new TabDriver(uniqueTabId, this._options, client))
+					callback(null, new TabDriver(uniqueTabId, this._options, client, cdpTarget))
 				}).catch((err) => {
 					callback(`error when initializing tab: ${err}`)
 				})

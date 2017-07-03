@@ -5,10 +5,11 @@ const _ = require('lodash')
 
 class TabDriver {
 
-	constructor(uniqueTabId, options, client) {
+	constructor(uniqueTabId, options, client, cdpTargetId) {
 		this.__closed = false
 		this.__uniqueTabId = uniqueTabId
 		this.__client = client
+		this.__cdpTargetId = cdpTargetId
 
 		this.__client.Security.certificateError((e) => {
 			Security.handleCertificateError({
@@ -17,18 +18,18 @@ class TabDriver {
 			});
 		});
 
-		//this.__client.Page.domContentEventFired((e) => {
-		//	console.log("-- domContentEventFired: " + JSON.stringify(e, undefined, 2))
-		//})
-		//this.__client.Page.loadEventFired((e) => {
-		//	console.log("-- loadEventFired: " + JSON.stringify(e, undefined, 2))
-		//})
-		//this.__client.Page.frameStartedLoading((e) => {
-		//	console.log("-- frameStartedLoading: " + JSON.stringify(e, undefined, 2))
-		//})
-		//this.__client.Page.frameStoppedLoading((e) => {
-		//	console.log("-- frameStoppedLoading: " + JSON.stringify(e, undefined, 2))
-		//})
+		this.__client.Page.domContentEventFired((e) => {
+			console.log("-- domContentEventFired: " + JSON.stringify(e, undefined, 2))
+		})
+		this.__client.Page.loadEventFired((e) => {
+			console.log("-- loadEventFired: " + JSON.stringify(e, undefined, 2))
+		})
+		this.__client.Page.frameStartedLoading((e) => {
+			console.log("-- frameStartedLoading: " + JSON.stringify(e, undefined, 2))
+		})
+		this.__client.Page.frameStoppedLoading((e) => {
+			console.log("-- frameStoppedLoading: " + JSON.stringify(e, undefined, 2))
+		})
 		//this.__client.Network.responseReceived((e) => {
 		//	console.log(`-- responseReceived: ${e.response.status} (type: ${e.type}, frameId: ${e.frameId}, loaderId: ${e.loaderId}) ${e.response.url}`)
 		//})
@@ -54,14 +55,25 @@ class TabDriver {
 	get closed() { return this.__closed }
 
 	_close(callback) {
-		// => callback(err)
+		this.__client.close(() => {
+			const CDP = require('chrome-remote-interface')
+			CDP.Close({ id: this.__cdpTargetId }, (err) => {
+				this.__closed = true // mark the tab as closed in all cases because we don't know how to recover
+				if (err) {
+					callback(`failed to close chrome tab: ${err}`)
+				} else {
+					callback(null)
+				}
+			})
+		})
 	}
 
 	_open(url, options, callback) {
 		// TODO handle options (POST etc)
+		// TODO control timeout, abort on slow requests
 		this.__client.Page.navigate({ url: url }, (err, res) => {
 			if (err) {
-				callback(err)
+				callback(`failed to make chrome navigate: ${err}`)
 			} else {
 				const frameId = res.frameId
 				let status = null
@@ -97,7 +109,7 @@ class TabDriver {
 	_waitUntilPresent(selectors, duration, operator, callback) { this.__callWaitMethod('until', 'present', selectors, duration, operator, callback) }
 	_waitWhilePresent(selectors, duration, operator, callback) { this.__callWaitMethod('while', 'present', selectors, duration, operator, callback) }
 	__callWaitMethod(waitType, visType, selectors, duration, operator, callback) {
-		const wait = (waitType, visType, selectors, duration, operator) => {
+		const waiterToInject = (waitType, visType, selectors, timeLeft, timeSpent, operator) => {
 			if (visType === 'visible') {
 				var selectorMatches = (selector) => {
 					let ret = false
@@ -132,8 +144,8 @@ class TabDriver {
 							}
 						}
 						if (invalidSelector) {
-							if ((start + duration) < Date.now()) {
-								reject(`waited ${Date.now() - start}ms but element "${invalidSelector}" still ${waitType === 'while' ? '' : 'not '}${visType}`)
+							if ((start + timeLeft) < Date.now()) {
+								reject(`waited ${timeSpent + (Date.now() - start)}ms but element "${invalidSelector}" still ${waitType === 'while' ? '' : 'not '}${visType}`)
 							} else {
 								setTimeout((() => waitForAll()), 500)
 							}
@@ -156,13 +168,13 @@ class TabDriver {
 						if (firstMatch) {
 							fulfill(firstMatch)
 						} else {
-							if ((start + duration) < Date.now()) {
+							if ((start + timeLeft) < Date.now()) {
 								let elementsToString = selectors.slice()
 								for (let e of elementsToString) {
 									e = `"${e}"`
 								}
 								elementsToString = elementsToString.join(', ')
-								reject(`waited ${Date.now() - start}ms but element${selectors.length > 0 ? 's' : ''} ${elementsToString} still ${waitType === 'while' ? '' : 'not '}${visType}`)
+								reject(`waited ${timeSpent + (Date.now() - start)}ms but element${selectors.length > 0 ? 's' : ''} ${elementsToString} still ${waitType === 'while' ? '' : 'not '}${visType}`)
 							} else {
 								console.log("+++ Did not find any, retrying")
 								setTimeout((() => waitForOne()), 500)
@@ -173,35 +185,69 @@ class TabDriver {
 				}
 			})
 		}
-		const payload = {
-			expression: `(${wait})("${waitType}", "${visType}", ${JSON.stringify(selectors)}, ${duration}, "${operator}")`,
-			awaitPromise: true,
-			returnByValue: true,
-			silent: true
-		}
-		this.__client.Runtime.evaluate(payload, (err, res) => {
-			if (err) {
-				callback(err)
-			} else {
-				//console.log(`evaluate result: ${JSON.stringify(res, undefined, 2)}`)
-				callback(null, null)
+		const tryToWait = (timeLeft, timeSpent) => {
+			console.log(" ===> tryToWait with time left of " + timeLeft + ", time spent " + timeSpent)
+			const payload = {
+				expression: `(${waiterToInject})("${waitType}", "${visType}", ${JSON.stringify(selectors)}, ${timeLeft}, ${timeSpent}, "${operator}")`,
+				awaitPromise: true,
+				returnByValue: true,
+				silent: true,
+				includeCommandLineAPI: false,
 			}
-		})
+			const start = Date.now()
+			this.__client.Runtime.evaluate(payload, (err, res) => {
+				if (err) {
+					if (_.has(res, "message") && (res.message === "Promise was collected")) {
+						console.log("Promise was collected!")
+						const timeElapsed = Date.now() - start
+						tryToWait((timeLeft - timeElapsed), (timeSpent + timeElapsed))
+					} else {
+						callback(`failed to make chrome wait ${waitType} ${visType}: ${err}`)
+					}
+				} else {
+					// TODO return matching selector if available
+					// TODO check for exceptions
+					console.log(`tryToWait result: ${JSON.stringify(res, undefined, 2)}`)
+					callback(null, null)
+				}
+			})
+		}
+		tryToWait(duration, 0)
 	}
 
 	_click(selector, options, callback) {
 		// TODO use options
+		// TODO support real mouse click using Input domain
 		const click = (selector) => {
 			const target = document.querySelector(selector)
 			if (target) {
-				const evt = new MouseEvent("click", {
+				// heavily inspired from CasperJS' clientutils click method
+				let posX = 0.5
+				let posY = 0.5
+				try {
+					const bounds = target.getBoundingClientRect()
+					posX = Math.floor(bounds.width  * (posX - (posX ^ 0)).toFixed(10)) + (posX ^ 0) + bounds.left
+					posY = Math.floor(bounds.height * (posY - (posY ^ 0)).toFixed(10)) + (posY ^ 0) + bounds.top
+				} catch (e) {
+					posX = 1
+					posY = 1
+				}
+				target.dispatchEvent(new MouseEvent("click", {
 					bubbles: true,
 					cancelable: true,
 					view: window,
-					detail: 1,
-					//screenX: 1,
-					//screenY: 1,
-				})
+					detail: 1, // "click count"
+					screenX: 1,
+					screenY: 1,
+					clientX: posX,
+					clientY: posY,
+					ctrlKey: false,
+					altKey: false,
+					shiftKey: false,
+					metaKey: false,
+					button: 0, // "main button" (usually left)
+					relatedTarget: target,
+				}))
 			} else {
 				throw 'cannot find selector'
 			}
@@ -209,10 +255,16 @@ class TabDriver {
 		const payload = {
 			expression: `(${click})(${JSON.stringify(selector)})`,
 			returnByValue: true,
-			silent: true
+			silent: true,
+			includeCommandLineAPI: false,
 		}
-		this.__client.Runtime.evaluate(payload, (err) => {
-			callback(err)
+		this.__client.Runtime.evaluate(payload, (err, res) => {
+			if (err) {
+				callback(`failed to make chrome click: ${err}`)
+			} else {
+				// TODO process res, check errors
+				callback(null)
+			}
 		})
 	}
 
@@ -226,6 +278,7 @@ class TabDriver {
 						fulfill(res)
 					}
 				}
+				// TODO make the function run with window as this
 				func(arg, done)
 			})
 		}
@@ -233,13 +286,14 @@ class TabDriver {
 			expression: `(${runEval})((${func}), ${JSON.stringify(arg)})`,
 			awaitPromise: true,
 			returnByValue: true,
-			silent: true
+			silent: true,
+			includeCommandLineAPI: false,
 		}
 		this.__client.Runtime.evaluate(payload, (err, res) => {
 			if (err) {
-				callback(err)
+				callback(`failed to make chrome evaluate code: ${err}`)
 			} else {
-				console.log(`evaluate result: ${JSON.stringify(res, undefined, 2)}`)
+				//console.log(`evaluate result: ${JSON.stringify(res, undefined, 2)}`)
 				callback(null, res.result.value)
 			}
 		})
@@ -249,11 +303,12 @@ class TabDriver {
 		const payload = {
 			expression: "window.location.href",
 			returnByValue: true,
-			silent: true
+			silent: true,
+			includeCommandLineAPI: false,
 		}
 		this.__client.Runtime.evaluate(payload, (err, res) => {
 			if (err) {
-				callback(err)
+				callback(`failed to make chrome return the url: ${err}`)
 			} else {
 				callback(null, res.result.value)
 			}
@@ -261,7 +316,22 @@ class TabDriver {
 	}
 
 	_getContent(callback) {
-		// => callback(err, content)
+		this.__client.DOM.getDocument((err, res) => {
+			if (err) {
+				callback(`failed to get the root dom node from page: ${err}`)
+			} else {
+				const payload = {
+					nodeId: res.root.nodeId
+				}
+				this.__client.DOM.getOuterHTML(payload, (err, res) => {
+					if (err) {
+						callback(`failed to get outer html from root dom node: ${err}`)
+					} else {
+						callback(null, res.outerHTML)
+					}
+				})
+			}
+		})
 	}
 
 	_fill(selector, params, options, callback) {
@@ -274,18 +344,31 @@ class TabDriver {
 	}
 
 	_screenshot(filename, options, callback) {
-		// Guarantees:
-		//  - filename: string
-		//  - options: plain object
-		//		- format: "jpg", "png", "base64:jpg" or "base64:png"
-		//		- quality: null or number between 1 and 100
-		//		- clipRect: null or plain object
-		//			- top: number
-		//			- left: number
-		//			- width: positive number
-		//			- height: positive number
-		//		- seletor: null or string
-		// => callback(err, path)
+		// TODO use options (clipRect, selector...)
+		// TODO use some Emulation domain tricks to take full page screenshots
+		const pathLib = require("path")
+		const ext = pathLib.extname(filename).toLowerCase()
+		const format = (ext === ".png" ? "png" : "jpeg")
+		const payload = {
+			format: format,
+			fromSurface: true,
+		}
+		if ((format === "jpeg")) {
+			payload.quality = options.quality || 75
+		}
+		this.__client.Page.captureScreenshot(payload, (err, res) => {
+			if (err) {
+				callback(`failed to make chrome take a screnshot: ${err}`)
+			} else {
+				require("fs").writeFile(filename, res.data, "base64", (err) => {
+					if (err) {
+						callback(`screenshot taken but could not write it to disk: ${err}`, filename)
+					} else {
+						callback(null, filename)
+					}
+				})
+			}
+		})
 	}
 
 	_sendKeys(selector, keys, options, callback) {
@@ -297,17 +380,50 @@ class TabDriver {
 	}
 
 	_injectFromDisk(url, callback) {
-		// Guarantees:
-		//  - url: string
-		// => callback(err)
-		// Control must return to the user when the injected script can immediately be used in an evaluate() call
+		require("fs").readFile(url, "utf8", (err, data) => {
+			if (err) {
+				callback(`could not read file from disk for injection into page: ${err}`)
+			} else {
+				this.__injectString(data, callback)
+			}
+		})
 	}
 
 	_injectFromUrl(url, callback) {
-		// Guarantees:
-		//  - url: string beginning with http:// or https://
-		// => callback(err)
-		// Control must return to the user when the injected script can immediately be used in an evaluate() call
+		const options = {
+			json: false,
+			parse_response: false,
+			parse_cookies: false,
+			// TODO set open_timeout, read_timeout according to user's timeout setting
+		}
+		require("needle").get(url, options, (err, res, data) => {
+			if (err) {
+				callback(`could not download file from url for injection into page: ${err}`)
+			} else {
+				if ((res.statusCode >= 200) && (res.statusCode < 300)) {
+					this.__injectString(data.toString(), callback)
+				} else {
+					callback(`could not download file from url for injection into page: got HTTP ${res.statusCode} ${res.statusMessage}`)
+				}
+			}
+		})
+	}
+
+	__injectString(str, callback) {
+		const payload = {
+			expression: str,
+			returnByValue: true,
+			silent: true,
+			includeCommandLineAPI: false,
+		}
+		this.__client.Runtime.evaluate(payload, (err, res) => {
+			if (err) {
+				callback(`failed to make chrome inject script: ${err}`)
+			} else {
+				// TODO check any kind of exceptions / errors
+				callback(null)
+			}
+		})
 	}
 
 }
