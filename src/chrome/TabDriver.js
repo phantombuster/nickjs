@@ -8,44 +8,88 @@ class TabDriver {
 	constructor(uniqueTabId, options, client, cdpTargetId) {
 		this.__closed = false
 		this.__uniqueTabId = uniqueTabId
+		this.__options = options
 		this.__client = client
 		this.__cdpTargetId = cdpTargetId
+	}
 
-		this.__client.Security.certificateError((e) => {
-			Security.handleCertificateError({
-				eventId: e.eventId,
-				action: 'continue'
+	_init(callback) {
+		Promise.all([
+			this.__client.Page.enable(),
+			this.__client.Network.enable(),
+			this.__client.Runtime.enable(),
+			this.__client.Security.enable(),
+		]).then(() => {
+			return this.__client.Security.setOverrideCertificateErrors({override: true})
+		}).then(() => {
+			if ((this.__options.whitelist.length > 0) || (this.__options.blacklist.length > 0)) {
+				return this.__client.Network.enableRequestInterception({ enabled: true })
+			}
+		}).then(() => {
+			return this.__client.Network.setUserAgentOverride({ userAgent: this.__options.userAgent })
+		}).then(() => {
+
+			// accept all certificates
+			this.__client.Security.certificateError((e) => {
+				Security.handleCertificateError({
+					eventId: e.eventId,
+					action: 'continue'
+				});
 			});
-		});
 
-		this.__client.Page.domContentEventFired((e) => {
-			console.log("-- domContentEventFired: " + JSON.stringify(e, undefined, 2))
-		})
-		this.__client.Page.loadEventFired((e) => {
-			console.log("-- loadEventFired: " + JSON.stringify(e, undefined, 2))
-		})
-		this.__client.Page.frameStartedLoading((e) => {
-			console.log("-- frameStartedLoading: " + JSON.stringify(e, undefined, 2))
-		})
-		this.__client.Page.frameStoppedLoading((e) => {
-			console.log("-- frameStoppedLoading: " + JSON.stringify(e, undefined, 2))
-		})
-		//this.__client.Network.responseReceived((e) => {
-		//	console.log(`-- responseReceived: ${e.response.status} (type: ${e.type}, frameId: ${e.frameId}, loaderId: ${e.loaderId}) ${e.response.url}`)
-		//})
-		//this.__client.Page.frameNavigated((e) => {
-		//	console.log("-- frameNavigated: " + JSON.stringify(e, undefined, 2))
-		//})
-		this.__client.Runtime.consoleAPICalled((e) => {
-			// TODO process all args
-			console.log(`> Tab ${this.__uniqueTabId}: Console message: ${e.args[0].value}`)
-		})
+			if ((this.__options.whitelist.length > 0) || (this.__options.blacklist.length > 0)) {
+				this.__client.Network.requestIntercepted((e) => {
+					console.log("-- domContentEventFired: " + JSON.stringify(e, undefined, 2))
+				})
+			}
 
-		if (options.printPageErrors) {
-			// TODO check this is working
-			this.__client.Runtime.exceptionThrown((e) => {
-				console.log(`> Tab ${this.__uniqueTabId}: Page JavaScript error: ${e.exceptionDetails.text}`)
+			this.__client.Page.domContentEventFired((e) => {
+				console.log("-- domContentEventFired: " + JSON.stringify(e, undefined, 2))
 			})
+			this.__client.Page.loadEventFired((e) => {
+				console.log("-- loadEventFired: " + JSON.stringify(e, undefined, 2))
+			})
+			this.__client.Page.frameStartedLoading((e) => {
+				console.log("-- frameStartedLoading: " + JSON.stringify(e, undefined, 2))
+			})
+			this.__client.Page.frameStoppedLoading((e) => {
+				console.log("-- frameStoppedLoading: " + JSON.stringify(e, undefined, 2))
+			})
+			//this.__client.Network.responseReceived((e) => {
+			//	console.log(`-- responseReceived: ${e.response.status} (type: ${e.type}, frameId: ${e.frameId}, loaderId: ${e.loaderId}) ${e.response.url}`)
+			//})
+			//this.__client.Page.frameNavigated((e) => {
+			//	console.log("-- frameNavigated: " + JSON.stringify(e, undefined, 2))
+			//})
+			this.__client.Runtime.consoleAPICalled((e) => {
+				// TODO process all args
+				console.log(`> Tab ${this.__uniqueTabId}: Console message: ${e.args[0].value}`)
+			})
+
+			if (this.__options.printPageErrors) {
+				// TODO check this is working
+				this.__client.Runtime.exceptionThrown((e) => {
+					console.log(`> Tab ${this.__uniqueTabId}: Page JavaScript error: ${e.exceptionDetails.text}`)
+				})
+			}
+
+		}).then(() => {
+			callback(null)
+		}).catch((err) => {
+			callback(`error when initializing new chrome tab: ${err}`)
+		})
+
+	}
+
+	__cdpCallFailed(err, res, errorText, callback) {
+		if ((typeof err === "boolean") && _.isPlainObject(res)) {
+			callback(`${errorText}: ${"TODO"}`)
+		} else {
+			if (typeof err === "string") {
+				callback(`${errorText}: ${err}`)
+			} else {
+				callback(errorText)
+			}
 		}
 	}
 
@@ -56,11 +100,11 @@ class TabDriver {
 
 	_close(callback) {
 		this.__client.close(() => {
-			const CDP = require('chrome-remote-interface')
-			CDP.Close({ id: this.__cdpTargetId }, (err) => {
+			const CDP = require("chrome-remote-interface")
+			CDP.Close({ id: this.__cdpTargetId }, (err, res) => {
 				this.__closed = true // mark the tab as closed in all cases because we don't know how to recover
 				if (err) {
-					callback(`failed to close chrome tab: ${err}`)
+					this.__cdpCallFailed(err, res, "failed to close chrome tab", callback)
 				} else {
 					callback(null)
 				}
@@ -73,7 +117,7 @@ class TabDriver {
 		// TODO control timeout, abort on slow requests
 		this.__client.Page.navigate({ url: url }, (err, res) => {
 			if (err) {
-				callback(`failed to make chrome navigate: ${err}`)
+				this.__cdpCallFailed(err, res, "failed to make chrome navigate", callback)
 			} else {
 				const frameId = res.frameId
 				let status = null
@@ -99,11 +143,6 @@ class TabDriver {
 		})
 	}
 
-	// Guarantees:
-	//  - selectors: array of strings containing at least one string
-	//  - duration: positive number
-	//  - operator: "and" or "or"
-	// => callback(err, selector or null)
 	_waitUntilVisible(selectors, duration, operator, callback) { this.__callWaitMethod('until', 'visible', selectors, duration, operator, callback) }
 	_waitWhileVisible(selectors, duration, operator, callback) { this.__callWaitMethod('while', 'visible', selectors, duration, operator, callback) }
 	_waitUntilPresent(selectors, duration, operator, callback) { this.__callWaitMethod('until', 'present', selectors, duration, operator, callback) }
@@ -202,7 +241,7 @@ class TabDriver {
 						const timeElapsed = Date.now() - start
 						tryToWait((timeLeft - timeElapsed), (timeSpent + timeElapsed))
 					} else {
-						callback(`failed to make chrome wait ${waitType} ${visType}: ${err}`)
+						this.__cdpCallFailed(err, res, `failed to make chrome wait ${waitType} ${visType}`, callback)
 					}
 				} else {
 					// TODO return matching selector if available
@@ -260,7 +299,7 @@ class TabDriver {
 		}
 		this.__client.Runtime.evaluate(payload, (err, res) => {
 			if (err) {
-				callback(`failed to make chrome click: ${err}`)
+				this.__cdpCallFailed(err, res, "click: failed to click on target element", callback)
 			} else {
 				// TODO process res, check errors
 				callback(null)
@@ -291,7 +330,7 @@ class TabDriver {
 		}
 		this.__client.Runtime.evaluate(payload, (err, res) => {
 			if (err) {
-				callback(`failed to make chrome evaluate code: ${err}`)
+				this.__cdpCallFailed(err, res, "evaluate: code evaluation failed", callback)
 			} else {
 				//console.log(`evaluate result: ${JSON.stringify(res, undefined, 2)}`)
 				callback(null, res.result.value)
@@ -308,7 +347,7 @@ class TabDriver {
 		}
 		this.__client.Runtime.evaluate(payload, (err, res) => {
 			if (err) {
-				callback(`failed to make chrome return the url: ${err}`)
+				this.__cdpCallFailed(err, res, "getUrl: could not get the current url", callback)
 			} else {
 				callback(null, res.result.value)
 			}
@@ -318,14 +357,11 @@ class TabDriver {
 	_getContent(callback) {
 		this.__client.DOM.getDocument((err, res) => {
 			if (err) {
-				callback(`failed to get the root dom node from page: ${err}`)
+				this.__cdpCallFailed(err, res, "getContent: failed to get root dom node from page", callback)
 			} else {
-				const payload = {
-					nodeId: res.root.nodeId
-				}
-				this.__client.DOM.getOuterHTML(payload, (err, res) => {
+				this.__client.DOM.getOuterHTML({ nodeId: res.root.nodeId }, (err, res) => {
 					if (err) {
-						callback(`failed to get outer html from root dom node: ${err}`)
+						this.__cdpCallFailed(err, res, "getContent: failed to get outer html from root dom node", callback)
 					} else {
 						callback(null, res.outerHTML)
 					}
@@ -346,6 +382,7 @@ class TabDriver {
 	_screenshot(filename, options, callback) {
 		// TODO use options (clipRect, selector...)
 		// TODO use some Emulation domain tricks to take full page screenshots
+		// TODO support PDF format
 		const pathLib = require("path")
 		const ext = pathLib.extname(filename).toLowerCase()
 		const format = (ext === ".png" ? "png" : "jpeg")
@@ -358,11 +395,11 @@ class TabDriver {
 		}
 		this.__client.Page.captureScreenshot(payload, (err, res) => {
 			if (err) {
-				callback(`failed to make chrome take a screnshot: ${err}`)
+				this.__cdpCallFailed(err, res, "screenshot: could not capture", callback)
 			} else {
 				require("fs").writeFile(filename, res.data, "base64", (err) => {
 					if (err) {
-						callback(`screenshot taken but could not write it to disk: ${err}`, filename)
+						callback(`screenshot: could not write captured data to disk: ${err}`, filename)
 					} else {
 						callback(null, filename)
 					}
@@ -382,7 +419,7 @@ class TabDriver {
 	_injectFromDisk(url, callback) {
 		require("fs").readFile(url, "utf8", (err, data) => {
 			if (err) {
-				callback(`could not read file from disk for injection into page: ${err}`)
+				callback(`inject: could not read file from disk for injection into page: ${err}`)
 			} else {
 				this.__injectString(data, callback)
 			}
@@ -403,7 +440,7 @@ class TabDriver {
 				if ((res.statusCode >= 200) && (res.statusCode < 300)) {
 					this.__injectString(data.toString(), callback)
 				} else {
-					callback(`could not download file from url for injection into page: got HTTP ${res.statusCode} ${res.statusMessage}`)
+					callback(`inject: could not download file from url for injection into page: got HTTP ${res.statusCode} ${res.statusMessage}`)
 				}
 			}
 		})
@@ -418,7 +455,7 @@ class TabDriver {
 		}
 		this.__client.Runtime.evaluate(payload, (err, res) => {
 			if (err) {
-				callback(`failed to make chrome inject script: ${err}`)
+				this.__cdpCallFailed(err, res, "inject: could not inject script into page", callback)
 			} else {
 				// TODO check any kind of exceptions / errors
 				callback(null)

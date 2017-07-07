@@ -45,7 +45,7 @@ class TabDriver {
 
 		this.__casper = casper.create(casperOptions)
 
-		if ((options.whitelist.length > 0) || (options.blacklist.length > 0))
+		if ((options.whitelist.length > 0) || (options.blacklist.length > 0)) {
 			this.__casper.on('resource.requested', (request, net) => {
 				if (options.whitelist.length > 0) {
 					let found = false
@@ -84,6 +84,7 @@ class TabDriver {
 						return net.abort()
 					}
 			})
+		}
 
 		if (options.printNavigation) {
 			this.__casper.on('navigation.requested', (url, type, isLocked, isMainFrame) => {

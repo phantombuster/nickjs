@@ -55,27 +55,23 @@ class BrowserDriver {
 	}
 
 	_newTabDriver(uniqueTabId, callback) {
-		const connectToTab = (tab) => {
-			CDP({ target: tab }, (client) => {
-				Promise.all([
-					client.Page.enable(),
-					client.Network.enable(),
-					client.Runtime.enable(),
-					client.Security.enable()
-				]).then(() => {
-					return client.Security.setOverrideCertificateErrors({override: true})
-				}).then(() => {
-					callback(null, new TabDriver(uniqueTabId, this._options, client, cdpTarget))
-				}).catch((err) => {
-					callback(`error when initializing tab: ${err}`)
+		const connectToTab = (cdpTarget) => {
+			CDP({ target: cdpTarget }, (client) => {
+				const tab = new TabDriver(uniqueTabId, this._options, client, cdpTarget.id)
+				tab._init((err) => {
+					if (err) {
+						callback(err)
+					} else {
+						callback(null, tab)
+					}
 				})
 			}).on('error', (err) => {
-				callback(`cannot connect to tab: ${err}`)
+				callback(`cannot connect to chrome tab: ${err}`)
 			})
 		}
 		CDP.List((err, tabs) => {
 			if (err) {
-				callback(`could not list tabs: ${err}`)
+				callback(`could not list chrome tabs: ${err}`)
 			} else {
 				if ((tabs.length === 1) && (tabs[0].url === "about:blank")) {
 					console.log("connecting to initial tab")
@@ -83,7 +79,7 @@ class BrowserDriver {
 				} else {
 					CDP.New((err, tab) => {
 						if (err) {
-							callback(`cannot create new tab: ${err}`)
+							callback(`cannot create new chrome tab: ${err}`)
 						} else {
 							console.log("connecting to a new tab")
 							connectToTab(tab)
