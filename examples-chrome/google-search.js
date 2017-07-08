@@ -2,7 +2,11 @@ const Nick = require('../src/Nick')
 const Promise = require('bluebird')
 
 const nick = new Nick({
-	driver: "chrome"
+	driver: "chrome",
+	blacklist: [
+		"sidecar.gitter.Im",
+		],
+	printAborts: true
 })
 
 nick.newTab().then(async (tab) => {

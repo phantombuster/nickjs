@@ -26,6 +26,7 @@ class TabDriver {
 				return this.__client.Network.enableRequestInterception({ enabled: true })
 			}
 		}).then(() => {
+			console.log("Setting user agent: " + this.__options.userAgent)
 			return this.__client.Network.setUserAgentOverride({ userAgent: this.__options.userAgent })
 		}).then(() => {
 
@@ -37,9 +38,57 @@ class TabDriver {
 				});
 			});
 
+			// request blocking
 			if ((this.__options.whitelist.length > 0) || (this.__options.blacklist.length > 0)) {
+				const continueRequest = (e, error, reason) => {
+					if (error) {
+						console.log("ABORTING request to " + e.request.url)
+					} else {
+						console.log("ALLOWING request to " + e.request.url)
+					}
+					if (reason && this.__options.printAborts) {
+						console.log(`> Tab ${this.__uniqueTabId}: Aborted (${reason}): ${e.request.url}`)
+					}
+					const payload = {
+						interceptionId: e.interceptionId
+					}
+					if (error) {
+						payload.errorReason = error
+					}
+					this.__client.Network.continueInterceptedRequest(payload, (err, res) => {
+						// We're ignoring errors here. Nothing can be done about it.
+					})
+				}
 				this.__client.Network.requestIntercepted((e) => {
-					console.log("-- domContentEventFired: " + JSON.stringify(e, undefined, 2))
+					if (this.__options.whitelist.length > 0) {
+						let found = false
+						for (const white of this.__options.whitelist) {
+							if (typeof white === "string") {
+								const url = e.request.url.toLowerCase()
+								if ((url.indexOf(white) === 0) || (url.indexOf(`https://${url}`)) === 0 || (url.indexOf(`http://${url}`) === 0)) {
+									found = true
+									break
+								}
+							} else if (white.test(e.request.url)) {
+								found = true
+								break
+							}
+						}
+						if (!found) {
+							return continueRequest(e, "Aborted", "not found in whitelist")
+						}
+					}
+					for (const black of this.__options.blacklist) {
+						if (typeof black === 'string') {
+							const url = e.request.url.toLowerCase()
+							if ((url.indexOf(black) === 0) || (url.indexOf(`https://${url}`)) === 0 || (url.indexOf(`http://${url}`) === 0)) {
+								return continueRequest(e, "Aborted", `blacklisted by "${black}"`)
+							}
+						} else if (black.test(e.request.url)) {
+							return continueRequest(e, "Aborted", `blacklisted by ${black}`)
+						}
+					}
+					continueRequest(e)
 				})
 			}
 
