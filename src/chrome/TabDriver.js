@@ -41,11 +41,6 @@ class TabDriver {
 			// request blocking
 			if ((this.__options.whitelist.length > 0) || (this.__options.blacklist.length > 0)) {
 				const continueRequest = (e, error, reason) => {
-					if (error) {
-						console.log("ABORTING request to " + e.request.url)
-					} else {
-						console.log("ALLOWING request to " + e.request.url)
-					}
 					if (reason && this.__options.printAborts) {
 						console.log(`> Tab ${this.__uniqueTabId}: Aborted (${reason}): ${e.request.url}`)
 					}
@@ -65,7 +60,7 @@ class TabDriver {
 						for (const white of this.__options.whitelist) {
 							if (typeof white === "string") {
 								const url = e.request.url.toLowerCase()
-								if ((url.indexOf(white) === 0) || (url.indexOf(`https://${url}`)) === 0 || (url.indexOf(`http://${url}`) === 0)) {
+								if ((url.indexOf(white) === 0) || (url.indexOf(`https://${white}`)) === 0 || (url.indexOf(`http://${white}`) === 0)) {
 									found = true
 									break
 								}
@@ -81,7 +76,7 @@ class TabDriver {
 					for (const black of this.__options.blacklist) {
 						if (typeof black === 'string') {
 							const url = e.request.url.toLowerCase()
-							if ((url.indexOf(black) === 0) || (url.indexOf(`https://${url}`)) === 0 || (url.indexOf(`http://${url}`) === 0)) {
+							if ((url.indexOf(black) === 0) || (url.indexOf(`https://${black}`) === 0) || (url.indexOf(`http://${black}`) === 0)) {
 								return continueRequest(e, "Aborted", `blacklisted by "${black}"`)
 							}
 						} else if (black.test(e.request.url)) {

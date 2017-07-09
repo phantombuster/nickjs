@@ -52,7 +52,7 @@ class TabDriver {
 					for (const white of options.whitelist) {
 						if (typeof white === 'string') {
 							const url = request.url.toLowerCase()
-							if ((url.indexOf(white) === 0) || (url.indexOf(`https://${url}`)) === 0 || (url.indexOf(`http://${url}`) === 0)) {
+							if ((url.indexOf(white) === 0) || (url.indexOf(`https://${white}`) === 0) || (url.indexOf(`http://${white}`) === 0)) {
 								found = true
 								break
 							}
@@ -71,7 +71,7 @@ class TabDriver {
 				for (const black of options.blacklist)
 					if (typeof black === 'string') {
 						const url = request.url.toLowerCase()
-						if ((url.indexOf(black) === 0) || (url.indexOf(`https://${url}`)) === 0 || (url.indexOf(`http://${url}`) === 0)) {
+						if ((url.indexOf(black) === 0) || (url.indexOf(`https://${black}`) === 0) || (url.indexOf(`http://${black}`) === 0)) {
 							if (options.printAborts) {
 								console.log(`> Tab ${this.__uniqueTabId}: Aborted (blacklisted by "${black}"): ${url}`)
 							}
