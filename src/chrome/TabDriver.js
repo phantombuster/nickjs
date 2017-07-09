@@ -87,18 +87,18 @@ class TabDriver {
 				})
 			}
 
-			this.__client.Page.domContentEventFired((e) => {
-				console.log("-- domContentEventFired: " + JSON.stringify(e, undefined, 2))
-			})
-			this.__client.Page.loadEventFired((e) => {
-				console.log("-- loadEventFired: " + JSON.stringify(e, undefined, 2))
-			})
-			this.__client.Page.frameStartedLoading((e) => {
-				console.log("-- frameStartedLoading: " + JSON.stringify(e, undefined, 2))
-			})
-			this.__client.Page.frameStoppedLoading((e) => {
-				console.log("-- frameStoppedLoading: " + JSON.stringify(e, undefined, 2))
-			})
+			//this.__client.Page.domContentEventFired((e) => {
+			//	console.log("-- domContentEventFired: " + JSON.stringify(e, undefined, 2))
+			//})
+			//this.__client.Page.loadEventFired((e) => {
+			//	console.log("-- loadEventFired: " + JSON.stringify(e, undefined, 2))
+			//})
+			//this.__client.Page.frameStartedLoading((e) => {
+			//	console.log("-- frameStartedLoading: " + JSON.stringify(e, undefined, 2))
+			//})
+			//this.__client.Page.frameStoppedLoading((e) => {
+			//	console.log("-- frameStoppedLoading: " + JSON.stringify(e, undefined, 2))
+			//})
 			//this.__client.Network.responseReceived((e) => {
 			//	console.log(`-- responseReceived: ${e.response.status} (type: ${e.type}, frameId: ${e.frameId}, loaderId: ${e.loaderId}) ${e.response.url}`)
 			//})
@@ -111,7 +111,7 @@ class TabDriver {
 			})
 
 			if (this.__options.printPageErrors) {
-				// TODO check this is working
+				// TODO check this is working as intended
 				this.__client.Runtime.exceptionThrown((e) => {
 					console.log(`> Tab ${this.__uniqueTabId}: Page JavaScript error: ${e.exceptionDetails.text}`)
 				})
@@ -125,15 +125,23 @@ class TabDriver {
 
 	}
 
-	__cdpCallFailed(err, res, errorText, callback) {
+	__parseCdpResponse(err, res, errorText) {
 		if ((typeof err === "boolean") && _.isPlainObject(res)) {
-			callback(`${errorText}: ${"TODO"}`)
-		} else {
-			if (typeof err === "string") {
-				callback(`${errorText}: ${err}`)
+			// dev tools protocol error
+			return `${errorText}: DevTools protocol error: ${"TODO"} ${JSON.stringify(res, undefined, 4)}`
+		} else if (_.isPlainObject(res) && _.isPlainObject(res.exceptionDetails)) {
+			// exception thrown by evaluate call
+			if (_.isPlainObject(res.exceptionDetails.exception) && (typeof res.exceptionDetails.exception.description === "string")) {
+				return `${errorText}: ${res.exceptionDetails.exception.description}`
 			} else {
-				callback(errorText)
+				return `${errorText}: Uncaught exception in evaluated code`
 			}
+		} else if (err) {
+			// generic error
+			return `${errorText}: ${err}`
+		} else {
+			// no error
+			return null
 		}
 	}
 
@@ -146,12 +154,8 @@ class TabDriver {
 		this.__client.close(() => {
 			const CDP = require("chrome-remote-interface")
 			CDP.Close({ id: this.__cdpTargetId }, (err, res) => {
-				this.__closed = true // mark the tab as closed in all cases because we don't know how to recover
-				if (err) {
-					this.__cdpCallFailed(err, res, "failed to close chrome tab", callback)
-				} else {
-					callback(null)
-				}
+				this.__closed = true // mark the tab as closed (we don't know how to recover anyway)
+				callback(this.__parseCdpResponse(err, res, "failed to close chrome tab"))
 			})
 		})
 	}
@@ -160,8 +164,9 @@ class TabDriver {
 		// TODO handle options (POST etc)
 		// TODO control timeout, abort on slow requests
 		this.__client.Page.navigate({ url: url }, (err, res) => {
+			err = __parseCdpResponse(err, res, "failed to make chrome navigate")
 			if (err) {
-				this.__cdpCallFailed(err, res, "failed to make chrome navigate", callback)
+				callback(err)
 			} else {
 				const frameId = res.frameId
 				let status = null
@@ -279,19 +284,18 @@ class TabDriver {
 			}
 			const start = Date.now()
 			this.__client.Runtime.evaluate(payload, (err, res) => {
-				if (err) {
-					if (_.has(res, "message") && (res.message === "Promise was collected")) {
-						console.log("Promise was collected!")
-						const timeElapsed = Date.now() - start
-						tryToWait((timeLeft - timeElapsed), (timeSpent + timeElapsed))
-					} else {
-						this.__cdpCallFailed(err, res, `failed to make chrome wait ${waitType} ${visType}`, callback)
-					}
+				if (_.has(res, "message") && (res.message === "Promise was collected")) {
+					console.log("Promise was collected!")
+					const timeElapsed = Date.now() - start
+					tryToWait((timeLeft - timeElapsed), (timeSpent + timeElapsed))
 				} else {
-					// TODO return matching selector if available
-					// TODO check for exceptions
-					console.log(`tryToWait result: ${JSON.stringify(res, undefined, 2)}`)
-					callback(null, null)
+					err = this.__parseCdpResponse(err, res, `failed to make chrome wait ${waitType} ${visType}`)
+					if (err) {
+						callback(err)
+					} else {
+						// TODO return matching selector if available
+						callback(null, null)
+					}
 				}
 			})
 		}
@@ -342,12 +346,7 @@ class TabDriver {
 			includeCommandLineAPI: false,
 		}
 		this.__client.Runtime.evaluate(payload, (err, res) => {
-			if (err) {
-				this.__cdpCallFailed(err, res, "click: failed to click on target element", callback)
-			} else {
-				// TODO process res, check errors
-				callback(null)
-			}
+			callback(this.__parseCdpResponse(err, res, "click: failed to click on target element"))
 		})
 	}
 
@@ -373,10 +372,11 @@ class TabDriver {
 			includeCommandLineAPI: false,
 		}
 		this.__client.Runtime.evaluate(payload, (err, res) => {
+			err = this.__parseCdpResponse(err, res, "evaluate: code evaluation failed")
 			if (err) {
-				this.__cdpCallFailed(err, res, "evaluate: code evaluation failed", callback)
+				callback(err, null)
 			} else {
-				//console.log(`evaluate result: ${JSON.stringify(res, undefined, 2)}`)
+				// TODO is this enough?
 				callback(null, res.result.value)
 			}
 		})
@@ -384,14 +384,15 @@ class TabDriver {
 
 	_getUrl(callback) {
 		const payload = {
-			expression: "window.location.href",
+			expression: "window.location2.href",
 			returnByValue: true,
 			silent: true,
 			includeCommandLineAPI: false,
 		}
 		this.__client.Runtime.evaluate(payload, (err, res) => {
+			err = this.__parseCdpResponse(err, res, "getUrl: could not get the current url")
 			if (err) {
-				this.__cdpCallFailed(err, res, "getUrl: could not get the current url", callback)
+				callback(err)
 			} else {
 				callback(null, res.result.value)
 			}
