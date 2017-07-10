@@ -126,7 +126,7 @@ class TabDriver {
 	}
 
 	__parseCdpResponse(err, res, errorText) {
-		if ((typeof err === "boolean") && _.isPlainObject(res)) {
+		if ((err === true) && _.isPlainObject(res)) {
 			// dev tools protocol error
 			return `${errorText}: DevTools protocol error: ${"TODO"} ${JSON.stringify(res, undefined, 4)}`
 		} else if (_.isPlainObject(res) && _.isPlainObject(res.exceptionDetails)) {
@@ -164,7 +164,7 @@ class TabDriver {
 		// TODO handle options (POST etc)
 		// TODO control timeout, abort on slow requests
 		this.__client.Page.navigate({ url: url }, (err, res) => {
-			err = __parseCdpResponse(err, res, "failed to make chrome navigate")
+			err = this.__parseCdpResponse(err, res, "failed to make chrome navigate")
 			if (err) {
 				callback(err)
 			} else {
@@ -278,8 +278,8 @@ class TabDriver {
 			const payload = {
 				expression: `(${waiterToInject})("${waitType}", "${visType}", ${JSON.stringify(selectors)}, ${timeLeft}, ${timeSpent}, "${operator}")`,
 				awaitPromise: true,
-				returnByValue: true,
-				silent: true,
+				//returnByValue: true,
+				//silent: true,
 				includeCommandLineAPI: false,
 			}
 			const start = Date.now()
@@ -302,51 +302,52 @@ class TabDriver {
 		tryToWait(duration, 0)
 	}
 
+	__click = (selector) => {
+		const target = document.querySelector(selector)
+		if (target) {
+			// heavily inspired from CasperJS' clientutils click method
+			let posX = 0.5
+			let posY = 0.5
+			try {
+				const bounds = target.getBoundingClientRect()
+				posX = Math.floor(bounds.width  * (posX - (posX ^ 0)).toFixed(10)) + (posX ^ 0) + bounds.left
+				posY = Math.floor(bounds.height * (posY - (posY ^ 0)).toFixed(10)) + (posY ^ 0) + bounds.top
+			} catch (e) {
+				posX = 1
+				posY = 1
+			}
+			target.dispatchEvent(new MouseEvent("click", {
+				bubbles: true,
+				cancelable: true,
+				view: window,
+				detail: 1, // "click count"
+				screenX: 1,
+				screenY: 1,
+				clientX: posX,
+				clientY: posY,
+				ctrlKey: false,
+				altKey: false,
+				shiftKey: false,
+				metaKey: false,
+				button: 0, // "main button" (usually left)
+				relatedTarget: target,
+			}))
+		} else {
+			throw `cannot find element "${selector}"`
+		}
+	}
+
 	_click(selector, options, callback) {
 		// TODO use options
 		// TODO support real mouse click using Input domain
-		const click = (selector) => {
-			const target = document.querySelector(selector)
-			if (target) {
-				// heavily inspired from CasperJS' clientutils click method
-				let posX = 0.5
-				let posY = 0.5
-				try {
-					const bounds = target.getBoundingClientRect()
-					posX = Math.floor(bounds.width  * (posX - (posX ^ 0)).toFixed(10)) + (posX ^ 0) + bounds.left
-					posY = Math.floor(bounds.height * (posY - (posY ^ 0)).toFixed(10)) + (posY ^ 0) + bounds.top
-				} catch (e) {
-					posX = 1
-					posY = 1
-				}
-				target.dispatchEvent(new MouseEvent("click", {
-					bubbles: true,
-					cancelable: true,
-					view: window,
-					detail: 1, // "click count"
-					screenX: 1,
-					screenY: 1,
-					clientX: posX,
-					clientY: posY,
-					ctrlKey: false,
-					altKey: false,
-					shiftKey: false,
-					metaKey: false,
-					button: 0, // "main button" (usually left)
-					relatedTarget: target,
-				}))
-			} else {
-				throw 'cannot find selector'
-			}
-		}
 		const payload = {
-			expression: `(${click})(${JSON.stringify(selector)})`,
-			returnByValue: true,
-			silent: true,
+			expression: `(${this.__click})(${JSON.stringify(selector)})`,
+			//returnByValue: true,
+			//silent: true,
 			includeCommandLineAPI: false,
 		}
 		this.__client.Runtime.evaluate(payload, (err, res) => {
-			callback(this.__parseCdpResponse(err, res, "click: failed to click on target element"))
+			callback(this.__parseCdpResponse(err, res, `click: failed to click on target element "${selector}"`))
 		})
 	}
 
@@ -367,8 +368,8 @@ class TabDriver {
 		const payload = {
 			expression: `(${runEval})((${func}), ${JSON.stringify(arg)})`,
 			awaitPromise: true,
-			returnByValue: true,
-			silent: true,
+			//returnByValue: true,
+			//silent: true,
 			includeCommandLineAPI: false,
 		}
 		this.__client.Runtime.evaluate(payload, (err, res) => {
@@ -384,9 +385,9 @@ class TabDriver {
 
 	_getUrl(callback) {
 		const payload = {
-			expression: "window.location2.href",
-			returnByValue: true,
-			silent: true,
+			expression: "window.location.href",
+			//returnByValue: true,
+			//silent: true,
 			includeCommandLineAPI: false,
 		}
 		this.__client.Runtime.evaluate(payload, (err, res) => {
@@ -401,12 +402,14 @@ class TabDriver {
 
 	_getContent(callback) {
 		this.__client.DOM.getDocument((err, res) => {
+			err = this.__parseCdpResponse(err, res, "getContent: failed to get root dom node from page")
 			if (err) {
-				this.__cdpCallFailed(err, res, "getContent: failed to get root dom node from page", callback)
+				callback(err)
 			} else {
 				this.__client.DOM.getOuterHTML({ nodeId: res.root.nodeId }, (err, res) => {
+					err = this.__parseCdpResponse(err, res, "getContent: failed to get outer html from root dom node")
 					if (err) {
-						this.__cdpCallFailed(err, res, "getContent: failed to get outer html from root dom node", callback)
+						callback(err)
 					} else {
 						callback(null, res.outerHTML)
 					}
@@ -439,8 +442,9 @@ class TabDriver {
 			payload.quality = options.quality || 75
 		}
 		this.__client.Page.captureScreenshot(payload, (err, res) => {
+			err = this.__parseCdpResponse(err, res, "screenshot: could not capture area")
 			if (err) {
-				this.__cdpCallFailed(err, res, "screenshot: could not capture", callback)
+				callback(err)
 			} else {
 				require("fs").writeFile(filename, res.data, "base64", (err) => {
 					if (err) {
@@ -459,6 +463,17 @@ class TabDriver {
 		//  - keys: string or number TODO confirm this
 		//  - options: plain object TODO describe more
 		// => callback(err)
+		const focusElement = (selector) => {
+		}
+		const payload = {
+			expression: `(${focusElement})(${JSON.stringify(selector)})`,
+			//returnByValue: true,
+			//silent: true,
+			includeCommandLineAPI: false,
+		}
+		this.__client.Runtime.evaluate(payload, (err, res) => {
+			callback(this.__parseCdpResponse(err, res, `sendKeys: could not focus editable element "${selector}"`))
+		})
 	}
 
 	_injectFromDisk(url, callback) {
@@ -494,17 +509,12 @@ class TabDriver {
 	__injectString(str, callback) {
 		const payload = {
 			expression: str,
-			returnByValue: true,
-			silent: true,
+			//returnByValue: true,
+			//silent: true,
 			includeCommandLineAPI: false,
 		}
 		this.__client.Runtime.evaluate(payload, (err, res) => {
-			if (err) {
-				this.__cdpCallFailed(err, res, "inject: could not inject script into page", callback)
-			} else {
-				// TODO check any kind of exceptions / errors
-				callback(null)
-			}
+			callback(this.__parseCdpResponse(err, res, "inject: could not inject script into page"))
 		})
 	}
 
