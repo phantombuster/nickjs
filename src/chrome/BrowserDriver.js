@@ -45,6 +45,10 @@ class BrowserDriver {
 			"--disable-gpu",
 			"--headless",
 			"--disable-web-security",
+			"--allow-insecure-localhost",
+			"--allow-running-insecure-content",
+			"--allow-file-access-from-files",
+			"--hide-scrollbars",
 			"--remote-debugging-port=9222"
 		])
 		process.on('exit', () => {

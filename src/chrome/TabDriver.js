@@ -11,6 +11,43 @@ class TabDriver {
 		this.__options = options
 		this.__client = client
 		this.__cdpTargetId = cdpTargetId
+
+		// internal click method
+		// this is meant to be evaluated in the page
+		this.__click = (selector) => {
+			const target = document.querySelector(selector)
+			if (target) {
+				// heavily inspired from CasperJS' clientutils click method
+				let posX = 0.5
+				let posY = 0.5
+				try {
+					const bounds = target.getBoundingClientRect()
+					posX = Math.floor(bounds.width  * (posX - (posX ^ 0)).toFixed(10)) + (posX ^ 0) + bounds.left
+					posY = Math.floor(bounds.height * (posY - (posY ^ 0)).toFixed(10)) + (posY ^ 0) + bounds.top
+				} catch (e) {
+					posX = 1
+					posY = 1
+				}
+				target.dispatchEvent(new MouseEvent("click", {
+					bubbles: true,
+					cancelable: true,
+					view: window,
+					detail: 1, // "click count"
+					screenX: 1,
+					screenY: 1,
+					clientX: posX,
+					clientY: posY,
+					ctrlKey: false,
+					altKey: false,
+					shiftKey: false,
+					metaKey: false,
+					button: 0, // "main button" (usually left)
+					relatedTarget: target,
+				}))
+			} else {
+				throw `cannot find element "${selector}"`
+			}
+		}
 	}
 
 	_init(callback) {
@@ -130,11 +167,22 @@ class TabDriver {
 			// dev tools protocol error
 			return `${errorText}: DevTools protocol error: ${"TODO"} ${JSON.stringify(res, undefined, 4)}`
 		} else if (_.isPlainObject(res) && _.isPlainObject(res.exceptionDetails)) {
-			// exception thrown by evaluate call
+			console.log(JSON.stringify(res, undefined, 8))
+			// exception thrown inside evaluate call
 			if (_.isPlainObject(res.exceptionDetails.exception) && (typeof res.exceptionDetails.exception.description === "string")) {
+				// we found a "description" string field in the exception details
 				return `${errorText}: ${res.exceptionDetails.exception.description}`
+			} else if (_.isPlainObject(res.exceptionDetails.exception) && (typeof res.exceptionDetails.exception.value === "string")) {
+				// we found a "value" string field in the exception details
+				return `${errorText}: ${res.exceptionDetails.exception.value}`
 			} else {
-				return `${errorText}: Uncaught exception in evaluated code`
+				if (typeof res.exceptionDetails.text === "string") {
+					// we found a "text" string field
+					return `${errorText}: Uncaught exception in evaluated code: ${res.exceptionDetails.text}`
+				} else {
+					// we cannot find anything interesting about this error
+					return `${errorText}: Uncaught exception in evaluated code`
+				}
 			}
 		} else if (err) {
 			// generic error
@@ -198,80 +246,87 @@ class TabDriver {
 	_waitWhilePresent(selectors, duration, operator, callback) { this.__callWaitMethod('while', 'present', selectors, duration, operator, callback) }
 	__callWaitMethod(waitType, visType, selectors, duration, operator, callback) {
 		const waiterToInject = (waitType, visType, selectors, timeLeft, timeSpent, operator) => {
-			if (visType === 'visible') {
-				var selectorMatches = (selector) => {
-					let ret = false
-					for (const element of document.querySelectorAll(selector)) {
-						const style = window.getComputedStyle(element)
-						if ((style.visibility !== 'hidden') && (style.display !== 'none')) {
-							const rect = element.getBoundingClientRect()
-							if ((rect.width > 0) && (rect.height > 0)) {
-								ret = true
-								break
-							}
-						}
-					}
-					return waitType === 'while' ? !ret : ret
-				}
-			} else {
-				var selectorMatches = (selector) => {
-					const ret = document.querySelector(selector) != null
-					return waitType === 'while' ? !ret : ret
-				}
-			}
-			return new Promise((fulfill, reject) => {
-				const start = Date.now()
-				if (operator === "and") {
-					const waitForAll = () => {
-						let invalidSelector = null
-						for (const sel of selectors) {
-							if (!selectorMatches(sel)) {
-								console.log("+++ Missing selector: " + sel, 1234)
-								invalidSelector = sel
-								break
-							}
-						}
-						if (invalidSelector) {
-							if ((start + timeLeft) < Date.now()) {
-								reject(`waited ${timeSpent + (Date.now() - start)}ms but element "${invalidSelector}" still ${waitType === 'while' ? '' : 'not '}${visType}`)
-							} else {
-								setTimeout((() => waitForAll()), 500)
-							}
-						} else {
-							console.log("+++ All selectors found")
-							fulfill()
-						}
-					}
-					waitForAll()
-				} else {
-					const waitForOne = () => {
-						let firstMatch = null
-						for (const sel of selectors) {
-							if (selectorMatches(sel)) {
-								firstMatch = sel
-								console.log("+++ Found one: " + sel)
-								break
-							}
-						}
-						if (firstMatch) {
-							fulfill(firstMatch)
-						} else {
-							if ((start + timeLeft) < Date.now()) {
-								let elementsToString = selectors.slice()
-								for (let e of elementsToString) {
-									e = `"${e}"`
+			try {
+				if (visType === 'visible') {
+					var selectorMatches = (selector) => {
+						let ret = false
+						for (const element of document.querySelectorAll(selector)) {
+							const style = window.getComputedStyle(element)
+							if ((style.visibility !== 'hidden') && (style.display !== 'none')) {
+								const rect = element.getBoundingClientRect()
+								if ((rect.width > 0) && (rect.height > 0)) {
+									ret = true
+									break
 								}
-								elementsToString = elementsToString.join(', ')
-								reject(`waited ${timeSpent + (Date.now() - start)}ms but element${selectors.length > 0 ? 's' : ''} ${elementsToString} still ${waitType === 'while' ? '' : 'not '}${visType}`)
-							} else {
-								console.log("+++ Did not find any, retrying")
-								setTimeout((() => waitForOne()), 500)
 							}
 						}
+						return waitType === 'while' ? !ret : ret
 					}
-					waitForOne()
+				} else {
+					var selectorMatches = (selector) => {
+						const ret = document.querySelector(selector) != null
+						return waitType === 'while' ? !ret : ret
+					}
 				}
-			})
+				return new Promise((fulfill, reject) => {
+					const start = Date.now()
+					if (operator === "and") {
+						const waitForAll = () => {
+							let invalidSelector = null
+							for (const sel of selectors) {
+								if (!selectorMatches(sel)) {
+									console.log("+++ Missing selector: " + sel, 1234)
+									invalidSelector = sel
+									break
+								}
+							}
+							if (invalidSelector) {
+								if ((start + timeLeft) < Date.now()) {
+									reject(`waited ${timeSpent + (Date.now() - start)}ms but element "${invalidSelector}" still ${waitType === 'while' ? '' : 'not '}${visType}`)
+								} else {
+									setTimeout((() => waitForAll()), 500)
+								}
+							} else {
+								console.log("+++ All selectors found")
+								fulfill()
+							}
+						}
+						waitForAll()
+					} else {
+						const waitForOne = () => {
+							let firstMatch = null
+							for (const sel of selectors) {
+								if (selectorMatches(sel)) {
+									firstMatch = sel
+									console.log("+++ Found one: " + sel)
+									break
+								}
+							}
+							if (firstMatch) {
+								fulfill(firstMatch)
+							} else {
+								if ((start + timeLeft) < Date.now()) {
+									let elementsToString = selectors.slice()
+									for (let e of elementsToString) {
+										e = `"${e}"`
+									}
+									elementsToString = elementsToString.join(', ')
+									reject(`waited ${timeSpent + (Date.now() - start)}ms but element${selectors.length > 0 ? 's' : ''} ${elementsToString} still ${waitType === 'while' ? '' : 'not '}${visType}`)
+								} else {
+									console.log("+++ Did not find any, retrying")
+									setTimeout((() => waitForOne()), 500)
+								}
+							}
+						}
+						waitForOne()
+					}
+				})
+			} catch (e) {
+				// TODO remove this whole try-catch
+				console.log("error in wait:")
+				console.log(e)
+				throw e
+			}
 		}
 		const tryToWait = (timeLeft, timeSpent) => {
 			console.log(" ===> tryToWait with time left of " + timeLeft + ", time spent " + timeSpent)
@@ -285,11 +340,13 @@ class TabDriver {
 			const start = Date.now()
 			this.__client.Runtime.evaluate(payload, (err, res) => {
 				if (_.has(res, "message") && (res.message === "Promise was collected")) {
+					// our code evaluation was stopped by a change of page (probably)
+					// so we try again
 					console.log("Promise was collected!")
 					const timeElapsed = Date.now() - start
 					tryToWait((timeLeft - timeElapsed), (timeSpent + timeElapsed))
 				} else {
-					err = this.__parseCdpResponse(err, res, `failed to make chrome wait ${waitType} ${visType}`)
+					err = this.__parseCdpResponse(err, res, `wait ${waitType} ${visType} failure`)
 					if (err) {
 						callback(err)
 					} else {
@@ -300,41 +357,6 @@ class TabDriver {
 			})
 		}
 		tryToWait(duration, 0)
-	}
-
-	__click = (selector) => {
-		const target = document.querySelector(selector)
-		if (target) {
-			// heavily inspired from CasperJS' clientutils click method
-			let posX = 0.5
-			let posY = 0.5
-			try {
-				const bounds = target.getBoundingClientRect()
-				posX = Math.floor(bounds.width  * (posX - (posX ^ 0)).toFixed(10)) + (posX ^ 0) + bounds.left
-				posY = Math.floor(bounds.height * (posY - (posY ^ 0)).toFixed(10)) + (posY ^ 0) + bounds.top
-			} catch (e) {
-				posX = 1
-				posY = 1
-			}
-			target.dispatchEvent(new MouseEvent("click", {
-				bubbles: true,
-				cancelable: true,
-				view: window,
-				detail: 1, // "click count"
-				screenX: 1,
-				screenY: 1,
-				clientX: posX,
-				clientY: posY,
-				ctrlKey: false,
-				altKey: false,
-				shiftKey: false,
-				metaKey: false,
-				button: 0, // "main button" (usually left)
-				relatedTarget: target,
-			}))
-		} else {
-			throw `cannot find element "${selector}"`
-		}
 	}
 
 	_click(selector, options, callback) {
@@ -431,12 +453,11 @@ class TabDriver {
 		// TODO use options (clipRect, selector...)
 		// TODO use some Emulation domain tricks to take full page screenshots
 		// TODO support PDF format
-		const pathLib = require("path")
-		const ext = pathLib.extname(filename).toLowerCase()
+		const ext = require("path").extname(filename).toLowerCase()
 		const format = (ext === ".png" ? "png" : "jpeg")
 		const payload = {
 			format: format,
-			fromSurface: true,
+			//fromSurface: true,
 		}
 		if ((format === "jpeg")) {
 			payload.quality = options.quality || 75
@@ -464,15 +485,45 @@ class TabDriver {
 		//  - options: plain object TODO describe more
 		// => callback(err)
 		const focusElement = (selector) => {
+			const target = document.querySelector(selector)
+			if (target) {
+				target.focus()
+			} else {
+				throw `cannot find element "${selector}"`
+			}
 		}
-		const payload = {
+		let payload = {
 			expression: `(${focusElement})(${JSON.stringify(selector)})`,
 			//returnByValue: true,
 			//silent: true,
 			includeCommandLineAPI: false,
 		}
 		this.__client.Runtime.evaluate(payload, (err, res) => {
-			callback(this.__parseCdpResponse(err, res, `sendKeys: could not focus editable element "${selector}"`))
+			err = this.__parseCdpResponse(err, res, `sendKeys: could not focus editable element "${selector}"`)
+			if (err) {
+				callback(err)
+			} else {
+				const dispatch = (chr, type, callback) => {
+					payload = {
+						type: type,
+						text: chr,
+					}
+					this.__client.Input.dispatchKeyEvent(payload, (err, res) => {
+						console.log(" -> " + type + " " + chr + " " + chr.charCodeAt(0))
+						callback(this.__parseCdpResponse(err, res, "sendKeys: could not dispatch key event"))
+					})
+				}
+				const chrIterator = (chr, callback) => {
+					dispatch(chr, "keyDown", (err) => {
+						if (err) {
+							callback(err)
+						} else {
+							dispatch(chr, "keyUp", callback)
+						}
+					})
+				}
+				require("async").eachSeries(Array.from(keys), chrIterator, callback)
+			}
 		})
 	}
 
