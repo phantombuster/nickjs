@@ -11,44 +11,6 @@ class TabDriver {
 		this.__options = options
 		this.__client = client
 		this.__cdpTargetId = cdpTargetId
-
-		// internal click method
-		// this is meant to be evaluated in the page
-		// TODO put this back in click() method
-		this.__click = (selector) => {
-			const target = document.querySelector(selector)
-			if (target) {
-				// heavily inspired from CasperJS' clientutils click method
-				let posX = 0.5
-				let posY = 0.5
-				try {
-					const bounds = target.getBoundingClientRect()
-					posX = Math.floor(bounds.width  * (posX - (posX ^ 0)).toFixed(10)) + (posX ^ 0) + bounds.left
-					posY = Math.floor(bounds.height * (posY - (posY ^ 0)).toFixed(10)) + (posY ^ 0) + bounds.top
-				} catch (e) {
-					posX = 1
-					posY = 1
-				}
-				target.dispatchEvent(new MouseEvent("click", {
-					bubbles: true,
-					cancelable: true,
-					view: window,
-					detail: 1, // "click count"
-					screenX: 1,
-					screenY: 1,
-					clientX: posX,
-					clientY: posY,
-					ctrlKey: false,
-					altKey: false,
-					shiftKey: false,
-					metaKey: false,
-					button: 0, // "main button" (usually left)
-					relatedTarget: target,
-				}))
-			} else {
-				throw `cannot find element "${selector}"`
-			}
-		}
 	}
 
 	_init(callback) {
@@ -64,7 +26,6 @@ class TabDriver {
 				return this.__client.Network.enableRequestInterception({ enabled: true })
 			}
 		}).then(() => {
-			//console.log("Setting user agent: " + this.__options.userAgent)
 			return this.__client.Network.setUserAgentOverride({ userAgent: this.__options.userAgent })
 		}).then(() => {
 
@@ -132,7 +93,7 @@ class TabDriver {
 			//	console.log("-- loadEventFired: " + JSON.stringify(e, undefined, 2))
 			//})
 			//this.__client.Page.frameStartedLoading((e) => {
-			//	console.log("-- frameStartedLoading: " + JSON.stringify(e, undefined, 2))
+			//	console.log("-- loadEventFired: " + JSON.stringify(e, undefined, 2))
 			//})
 			//this.__client.Page.frameStoppedLoading((e) => {
 			//	console.log("-- frameStoppedLoading: " + JSON.stringify(e, undefined, 2))
@@ -140,18 +101,21 @@ class TabDriver {
 			//this.__client.Network.responseReceived((e) => {
 			//	console.log(`-- responseReceived: ${e.response.status} (type: ${e.type}, frameId: ${e.frameId}, loaderId: ${e.loaderId}) ${e.response.url}`)
 			//})
-			//this.__client.Page.frameNavigated((e) => {
-			//	console.log("-- frameNavigated: " + JSON.stringify(e, undefined, 2))
+			//this.__client.Runtime.consoleAPICalled((e) => {
+			//	// TODO process all args
+			//	console.log(`> Tab ${this.__uniqueTabId}: Console message: ${e.args[0].value}`)
 			//})
-			this.__client.Runtime.consoleAPICalled((e) => {
-				// TODO process all args
-				console.log(`> Tab ${this.__uniqueTabId}: Console message: ${e.args[0].value}`)
-			})
 
 			if (this.__options.printPageErrors) {
 				// TODO check this is working as intended
 				this.__client.Runtime.exceptionThrown((e) => {
 					console.log(`> Tab ${this.__uniqueTabId}: Page JavaScript error: ${this.__summarizeException(e)}`)
+				})
+			}
+
+			if (this.__options.printNavigation) {
+				this.__client.Page.frameNavigated((e) => {
+					console.log(`> Tab ${this.__uniqueTabId}: Navigation: ${e.frame.url}`)
 				})
 			}
 
@@ -237,7 +201,12 @@ class TabDriver {
 						newUrl = e.frame.url
 						this.__client.removeListener("Network.responseReceived", responseReceived)
 						this.__client.removeListener("Page.frameNavigated", frameNavigated)
-						callback(null, status, statusText, newUrl)
+						const domContentEventFired = () => {
+							this.__client.removeListener("Page.domContentEventFired", domContentEventFired)
+							console.log(">>>>>>>Got dom content")
+							callback(null, status, statusText, newUrl)
+						}
+						this.__client.on("Page.domContentEventFired", domContentEventFired)
 					}
 				}
 				this.__client.on("Page.frameNavigated", frameNavigated)
@@ -358,8 +327,42 @@ class TabDriver {
 	_click(selector, options, callback) {
 		// TODO use options
 		// TODO support real mouse click using Input domain
+		const click = (selector) => {
+			const target = document.querySelector(selector)
+			if (target) {
+				// heavily inspired from CasperJS' clientutils click method
+				let posX = 0.5
+				let posY = 0.5
+				try {
+					const bounds = target.getBoundingClientRect()
+					posX = Math.floor(bounds.width  * (posX - (posX ^ 0)).toFixed(10)) + (posX ^ 0) + bounds.left
+					posY = Math.floor(bounds.height * (posY - (posY ^ 0)).toFixed(10)) + (posY ^ 0) + bounds.top
+				} catch (e) {
+					posX = 1
+					posY = 1
+				}
+				target.dispatchEvent(new MouseEvent("click", {
+					bubbles: true,
+					cancelable: true,
+					view: window,
+					detail: 1, // "click count"
+					screenX: 1,
+					screenY: 1,
+					clientX: posX,
+					clientY: posY,
+					ctrlKey: false,
+					altKey: false,
+					shiftKey: false,
+					metaKey: false,
+					button: 0, // "main button" (usually left)
+					relatedTarget: target,
+				}))
+			} else {
+				throw `cannot find element "${selector}"`
+			}
+		}
 		const payload = {
-			expression: `(${this.__click})(${JSON.stringify(selector)})`,
+			expression: `(${click})(${JSON.stringify(selector)})`,
 			includeCommandLineAPI: false,
 		}
 		this.__client.Runtime.evaluate(payload, (err, res) => {
@@ -585,7 +588,7 @@ class TabDriver {
 						text: chr,
 					}
 					this.__client.Input.dispatchKeyEvent(payload, (err, res) => {
-						console.log(" -> " + type + " " + chr + " " + chr.charCodeAt(0))
+						//console.log(" -> " + type + " " + chr + " " + chr.charCodeAt(0))
 						callback(this.__parseCdpResponse(err, res, "sendKeys: could not dispatch key event"))
 					})
 				}
