@@ -14,6 +14,7 @@ class TabDriver {
 
 		// internal click method
 		// this is meant to be evaluated in the page
+		// TODO put this back in click() method
 		this.__click = (selector) => {
 			const target = document.querySelector(selector)
 			if (target) {
@@ -63,7 +64,7 @@ class TabDriver {
 				return this.__client.Network.enableRequestInterception({ enabled: true })
 			}
 		}).then(() => {
-			console.log("Setting user agent: " + this.__options.userAgent)
+			//console.log("Setting user agent: " + this.__options.userAgent)
 			return this.__client.Network.setUserAgentOverride({ userAgent: this.__options.userAgent })
 		}).then(() => {
 
@@ -88,7 +89,7 @@ class TabDriver {
 						payload.errorReason = error
 					}
 					this.__client.Network.continueInterceptedRequest(payload, (err, res) => {
-						// We're ignoring errors here. Nothing can be done about it.
+						// We're ignoring errors here. Not much can be done about it.
 					})
 				}
 				this.__client.Network.requestIntercepted((e) => {
@@ -150,7 +151,7 @@ class TabDriver {
 			if (this.__options.printPageErrors) {
 				// TODO check this is working as intended
 				this.__client.Runtime.exceptionThrown((e) => {
-					console.log(`> Tab ${this.__uniqueTabId}: Page JavaScript error: ${e.exceptionDetails.text}`)
+					console.log(`> Tab ${this.__uniqueTabId}: Page JavaScript error: ${this.__summarizeException(e)}`)
 				})
 			}
 
@@ -162,28 +163,32 @@ class TabDriver {
 
 	}
 
+	__summarizeException(e) {
+		console.log(JSON.stringify(e, undefined, 8))
+		if (_.isPlainObject(e.exceptionDetails.exception) && (typeof e.exceptionDetails.exception.description === "string")) {
+			// we found a "description" string field in the exception details
+			return e.exceptionDetails.exception.description
+		} else if (_.isPlainObject(e.exceptionDetails.exception) && (typeof e.exceptionDetails.exception.value === "string")) {
+			// we found a "value" string field in the exception details
+			return e.exceptionDetails.exception.value
+		} else {
+			if (typeof e.exceptionDetails.text === "string") {
+				// we found a "text" string field
+				return e.exceptionDetails.text
+			} else {
+				// we cannot find anything interesting about this exception
+				return "uncaught exception"
+			}
+		}
+	}
+
 	__parseCdpResponse(err, res, errorText) {
 		if ((err === true) && _.isPlainObject(res)) {
 			// dev tools protocol error
 			return `${errorText}: DevTools protocol error: ${"TODO"} ${JSON.stringify(res, undefined, 4)}`
 		} else if (_.isPlainObject(res) && _.isPlainObject(res.exceptionDetails)) {
-			console.log(JSON.stringify(res, undefined, 8))
-			// exception thrown inside evaluate call
-			if (_.isPlainObject(res.exceptionDetails.exception) && (typeof res.exceptionDetails.exception.description === "string")) {
-				// we found a "description" string field in the exception details
-				return `${errorText}: ${res.exceptionDetails.exception.description}`
-			} else if (_.isPlainObject(res.exceptionDetails.exception) && (typeof res.exceptionDetails.exception.value === "string")) {
-				// we found a "value" string field in the exception details
-				return `${errorText}: ${res.exceptionDetails.exception.value}`
-			} else {
-				if (typeof res.exceptionDetails.text === "string") {
-					// we found a "text" string field
-					return `${errorText}: Uncaught exception in evaluated code: ${res.exceptionDetails.text}`
-				} else {
-					// we cannot find anything interesting about this error
-					return `${errorText}: Uncaught exception in evaluated code`
-				}
-			}
+			// exception from evaluate() call
+			return `${errorText}: exception thrown from page: ${this.__summarizeException(res)}`
 		} else if (err) {
 			// generic error
 			return `${errorText}: ${err}`
@@ -246,95 +251,86 @@ class TabDriver {
 	_waitWhilePresent(selectors, duration, operator, callback) { this.__callWaitMethod('while', 'present', selectors, duration, operator, callback) }
 	__callWaitMethod(waitType, visType, selectors, duration, operator, callback) {
 		const waiterToInject = (waitType, visType, selectors, timeLeft, timeSpent, operator) => {
-			try {
-				if (visType === 'visible') {
-					var selectorMatches = (selector) => {
-						let ret = false
-						for (const element of document.querySelectorAll(selector)) {
-							const style = window.getComputedStyle(element)
-							if ((style.visibility !== 'hidden') && (style.display !== 'none')) {
-								const rect = element.getBoundingClientRect()
-								if ((rect.width > 0) && (rect.height > 0)) {
-									ret = true
-									break
-								}
+			if (visType === 'visible') {
+				var selectorMatches = (selector) => {
+					let ret = false
+					for (const element of document.querySelectorAll(selector)) {
+						const style = window.getComputedStyle(element)
+						if ((style.visibility !== 'hidden') && (style.display !== 'none')) {
+							const rect = element.getBoundingClientRect()
+							if ((rect.width > 0) && (rect.height > 0)) {
+								ret = true
+								break
 							}
 						}
-						return waitType === 'while' ? !ret : ret
 					}
-				} else {
-					var selectorMatches = (selector) => {
-						const ret = document.querySelector(selector) != null
-						return waitType === 'while' ? !ret : ret
-					}
+					return waitType === 'while' ? !ret : ret
 				}
-				return new Promise((fulfill, reject) => {
-					const start = Date.now()
-					if (operator === "and") {
-						const waitForAll = () => {
-							let invalidSelector = null
-							for (const sel of selectors) {
-								if (!selectorMatches(sel)) {
-									console.log("+++ Missing selector: " + sel, 1234)
-									invalidSelector = sel
-									break
-								}
-							}
-							if (invalidSelector) {
-								if ((start + timeLeft) < Date.now()) {
-									reject(`waited ${timeSpent + (Date.now() - start)}ms but element "${invalidSelector}" still ${waitType === 'while' ? '' : 'not '}${visType}`)
-								} else {
-									setTimeout((() => waitForAll()), 500)
-								}
-							} else {
-								console.log("+++ All selectors found")
-								fulfill()
-							}
-						}
-						waitForAll()
-					} else {
-						const waitForOne = () => {
-							let firstMatch = null
-							for (const sel of selectors) {
-								if (selectorMatches(sel)) {
-									firstMatch = sel
-									console.log("+++ Found one: " + sel)
-									break
-								}
-							}
-							if (firstMatch) {
-								fulfill(firstMatch)
-							} else {
-								if ((start + timeLeft) < Date.now()) {
-									let elementsToString = selectors.slice()
-									for (let e of elementsToString) {
-										e = `"${e}"`
-									}
-									elementsToString = elementsToString.join(', ')
-									reject(`waited ${timeSpent + (Date.now() - start)}ms but element${selectors.length > 0 ? 's' : ''} ${elementsToString} still ${waitType === 'while' ? '' : 'not '}${visType}`)
-								} else {
-									console.log("+++ Did not find any, retrying")
-									setTimeout((() => waitForOne()), 500)
-								}
-							}
-						}
-						waitForOne()
-					}
-				})
-			} catch (e) {
-				// TODO remove this whole try-catch
-				console.log("error in wait:")
-				console.log(e)
-				throw e
+			} else {
+				var selectorMatches = (selector) => {
+					const ret = document.querySelector(selector) != null
+					return waitType === 'while' ? !ret : ret
+				}
 			}
+			return new Promise((fulfill, reject) => {
+				const start = Date.now()
+				if (operator === "and") {
+					const waitForAll = () => {
+						let invalidSelector = null
+						for (const sel of selectors) {
+							if (!selectorMatches(sel)) {
+								//console.log("+++ Missing selector: " + sel, 1234)
+								invalidSelector = sel
+								break
+							}
+						}
+						if (invalidSelector) {
+							if ((start + timeLeft) < Date.now()) {
+								reject(`waited ${timeSpent + (Date.now() - start)}ms but element "${invalidSelector}" still ${waitType === 'while' ? '' : 'not '}${visType}`)
+							} else {
+								setTimeout((() => waitForAll()), 50)
+							}
+						} else {
+							//console.log("+++ All selectors found")
+							fulfill()
+						}
+					}
+					waitForAll()
+				} else {
+					const waitForOne = () => {
+						let firstMatch = null
+						for (const sel of selectors) {
+							if (selectorMatches(sel)) {
+								firstMatch = sel
+								//console.log("+++ Found one: " + sel)
+								break
+							}
+						}
+						if (firstMatch) {
+							fulfill(firstMatch)
+						} else {
+							if ((start + timeLeft) < Date.now()) {
+								let elementsToString = selectors.slice()
+								for (let e of elementsToString) {
+									e = `"${e}"`
+								}
+								elementsToString = elementsToString.join(', ')
+								reject(`waited ${timeSpent + (Date.now() - start)}ms but element${selectors.length > 0 ? 's' : ''} ${elementsToString} still ${waitType === 'while' ? '' : 'not '}${visType}`)
+							} else {
+								//console.log("+++ Did not find any, retrying")
+								setTimeout((() => waitForOne()), 50)
+							}
+						}
+					}
+					waitForOne()
+				}
+			})
 		}
 		const tryToWait = (timeLeft, timeSpent) => {
-			console.log(" ===> tryToWait with time left of " + timeLeft + ", time spent " + timeSpent)
+			//console.log(" ===> tryToWait with time left of " + timeLeft + ", time spent " + timeSpent)
 			const payload = {
 				expression: `(${waiterToInject})("${waitType}", "${visType}", ${JSON.stringify(selectors)}, ${timeLeft}, ${timeSpent}, "${operator}")`,
 				awaitPromise: true,
-				//returnByValue: true,
-				//silent: true,
 				includeCommandLineAPI: false,
 			}
 			const start = Date.now()
@@ -342,7 +338,7 @@ class TabDriver {
 				if (_.has(res, "message") && (res.message === "Promise was collected")) {
 					// our code evaluation was stopped by a change of page (probably)
 					// so we try again
-					console.log("Promise was collected!")
+					// console.log("Promise was collected!")
 					const timeElapsed = Date.now() - start
 					tryToWait((timeLeft - timeElapsed), (timeSpent + timeElapsed))
 				} else {
@@ -364,8 +360,6 @@ class TabDriver {
 		// TODO support real mouse click using Input domain
 		const payload = {
 			expression: `(${this.__click})(${JSON.stringify(selector)})`,
-			//returnByValue: true,
-			//silent: true,
 			includeCommandLineAPI: false,
 		}
 		this.__client.Runtime.evaluate(payload, (err, res) => {
@@ -408,8 +402,6 @@ class TabDriver {
 	_getUrl(callback) {
 		const payload = {
 			expression: "window.location.href",
-			//returnByValue: true,
-			//silent: true,
 			includeCommandLineAPI: false,
 		}
 		this.__client.Runtime.evaluate(payload, (err, res) => {
@@ -441,12 +433,94 @@ class TabDriver {
 	}
 
 	_fill(selector, params, options, callback) {
-		// Guarantees:
-		//  - selector: string
-		// TODO describe params guarantees
+		// TODO describe params guarantees, update skel
+		// TODO dont forget that param values can be an array (to check multiple checkboxes or choose multiple choices in a <select>)
 		//  - options: plain object
 		//		- submit: boolean
-		// => callback(err)
+		// TODO support file upload
+		const fillForm = (selector, params, options) => {
+			const form = document.querySelector(selector)
+			if (!form) {
+				throw `cannot find any element matching "${selector}"`
+			} else if (form.nodeName !== "FORM") {
+				if (typeof form.nodeName === "string") {
+					throw `element "${selector}" is a ${form.nodeName}, not a form`
+				} else {
+					throw `element "${selector}" is not a form`
+				}
+			}
+			for (const inputName in params) {
+				let desiredValues = params[inputName]
+				if (!Array.isArray(desiredValues)) {
+					desiredValues = [desiredValues]
+				}
+				const matchingFields = form.querySelectorAll(`[name="${inputName}"]`)
+				for (const field of matchingFields) {
+					try {
+						field.focus()
+					} catch (e) {}
+					if (field.getAttribute("contenteditable")) {
+						field.textContent = desiredValues[0]
+					} else {
+						let fieldType = field.nodeName.toLowerCase()
+						if (field.getAttribute("type")) {
+							fieldType = field.getAttribute("type").toLowerCase()
+						}
+						switch (fieldType) {
+							case "checkbox":
+							case "radio":
+								// sometimes the user wants to check a specific checkbox with a boolean
+								// other times he can specify a value or an array of values to check multiple checkboxes sharing the same name
+								if ((desiredValues.length === 1) && (typeof desiredValues[0] === "boolean")) {
+									field.checked = desiredValues[0]
+								} else {
+									field.checked = (desiredValues.indexOf(field.getAttribute("value")) >= 0)
+								}
+								break
+							case "file":
+								throw "inputs of type \"file\" are not handled yet, sorry"
+							case "select":
+								for (const option of field.options) {
+									option.selected = (desiredValues.indexOf(option.value) >= 0)
+								}
+								// if the value wasnt correctly set, try setting it using the <option> texts
+								if (!field.value || (!field.multiple && (field.value !== desiredValues[0]))) {
+									for (const option of field.options) {
+										option.selected = (desiredValues.indexOf(option.text) >= 0)
+									}
+								}
+								break
+							default:
+								field.value = desiredValues[0]
+						}
+					}
+					field.dispatchEvent(new Event("change", { bubbles: true, cancelable: true }))
+					field.dispatchEvent(new Event("input", { bubbles: true, cancelable: true }))
+					try {
+						field.blur()
+					} catch (e) {}
+				}
+			}
+			if (options.submit) {
+				if (!form.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }))) {
+					throw `could not dispatch submit event to form "${selector}"`
+				}
+				if (typeof form.submit === "function") {
+					form.submit()
+				} else {
+					// if an input has a name of "submit" (or an id?), the form loses its submit functon attribute
+					// so we do this trick taken from https://stackoverflow.com/questions/833032/submit-is-not-a-function-error-in-javascript
+					document.createElement("form").submit.call(form)
+				}
+			}
+		}
+		const payload = {
+			expression: `(${fillForm})(${JSON.stringify(selector)}, ${JSON.stringify(params)}, ${JSON.stringify(options)})`,
+			includeCommandLineAPI: false,
+		}
+		this.__client.Runtime.evaluate(payload, (err, res) => {
+			callback(this.__parseCdpResponse(err, res, `fill: error when filling "${selector}" form`))
+		})
 	}
 
 	_screenshot(filename, options, callback) {
@@ -479,11 +553,7 @@ class TabDriver {
 	}
 
 	_sendKeys(selector, keys, options, callback) {
-		// Guarantees:
-		//  - selector: string
-		//  - keys: string or number TODO confirm this
-		//  - options: plain object TODO describe more
-		// => callback(err)
+		// TODO support array as input, support special characters, standardize, update skel
 		const focusElement = (selector) => {
 			const target = document.querySelector(selector)
 			if (target) {
@@ -492,10 +562,16 @@ class TabDriver {
 				throw `cannot find element "${selector}"`
 			}
 		}
+		const blurElement = (selector) => {
+			const target = document.querySelector(selector)
+			if (target) {
+				try {
+					target.blur()
+				} catch (e) {}
+			}
+		}
 		let payload = {
 			expression: `(${focusElement})(${JSON.stringify(selector)})`,
-			//returnByValue: true,
-			//silent: true,
 			includeCommandLineAPI: false,
 		}
 		this.__client.Runtime.evaluate(payload, (err, res) => {
@@ -522,7 +598,19 @@ class TabDriver {
 						}
 					})
 				}
-				require("async").eachSeries(Array.from(keys), chrIterator, callback)
+				require("async").eachSeries(Array.from(keys), chrIterator, (err) => {
+					if (err) {
+						callback(err)
+					} else {
+						payload = {
+							expression: `(${blurElement})(${JSON.stringify(selector)})`,
+							includeCommandLineAPI: false,
+						}
+						this.__client.Runtime.evaluate(payload, (err, res) => {
+							callback(this.__parseCdpResponse(err, res, `sendKeys: could not blur editable element "${selector}"`))
+						})
+					}
+				})
 			}
 		})
 	}

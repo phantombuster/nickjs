@@ -41,7 +41,18 @@ nick.newTab().then(async (tab) => {
 	console.log("Waiting 1s...")
 	await Promise.delay(1000)
 
-	const filename = await tab.screenshot("test.png")
+	let filename = await tab.screenshot("test1.png")
+	console.log("Screenshot " + filename + " saved")
+
+	await tab.fill("form", {
+		"email": "john@doe.com",
+		"password": "johnjohn"
+	}, { submit: true })
+
+	console.log("Waiting 1s...")
+	await Promise.delay(1000)
+
+	filename = await tab.screenshot("test2.png")
 	console.log("Screenshot " + filename + " saved")
 
 	//await tab.click("body > div > div.list-challenges > ul > li:nth-child(2) > a")
