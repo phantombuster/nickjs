@@ -22,14 +22,21 @@ class BrowserDriver {
 	}
 
 	_initialize(callback) {
-		console.log("init")
+		//console.log("init")
+
 		//const options = {
 		//	port: 9222,
-		//	chromePath: 'google-chrome',
+		//	logLevel: "verbose",
+		//	//chromePath: 'google-chrome',
 		//	chromeFlags: [
-		//		//`--window-size=${this._options.width},${this._options.height}`,
+		//		`--window-size=${this._options.width},${this._options.height}`,
 		//		"--disable-gpu",
-		//		"--headless"
+		//		"--headless",
+		//		"--disable-web-security",
+		//		"--allow-insecure-localhost",
+		//		"--allow-running-insecure-content",
+		//		"--allow-file-access-from-files",
+		//		"--hide-scrollbars",
 		//	]
 		//}
 		//chromeLauncher.launch(options).then(() => {
@@ -39,18 +46,34 @@ class BrowserDriver {
 		//	console.log("launch NOT ok")
 		//	callback(err)
 		//})
+
 		const execFile = require("child_process").execFile
-		const child = execFile("google-chrome-unstable", [
-			`--window-size=${this._options.width},${this._options.height}`,
+		const chromePath = process.env.CHROME_PATH || "google-chrome"
+		const child = execFile(chromePath, [
+			"--remote-debugging-port=9222",
+			// headless flags
 			"--disable-gpu",
 			"--headless",
+			"--hide-scrollbars",
+			// allow ugly things because we want to scrape without being bothered
 			"--disable-web-security",
 			"--allow-insecure-localhost",
 			"--allow-running-insecure-content",
 			"--allow-file-access-from-files",
-			"--hide-scrollbars",
-			"--remote-debugging-port=9222"
+			// set window size
+			`--window-size=${this._options.width},${this._options.height}`,
+			// flags taken from chrome-launcher
+			"--disable-translate", // built-in Google Translate stuff
+			"--disable-extensions",
+			"--disable-sync", // google account sync
+			"--disable-background-networking",
+			"--safebrowsing-disable-auto-update",
+			"--metrics-recording-only",
+			"--disable-default-apps",
+			"--no-first-run",
 		])
+		// TODO 1. check error state of fork
+		// TODO 2. loop on net.createConnection to know when the debugger is ready
 		process.on('exit', () => {
 			console.log("Killing Chrome child process")
 			child.kill()
@@ -78,14 +101,14 @@ class BrowserDriver {
 				callback(`could not list chrome tabs: ${err}`)
 			} else {
 				if ((tabs.length === 1) && (tabs[0].url === "about:blank")) {
-					console.log("connecting to initial tab")
+					//console.log("connecting to initial tab")
 					connectToTab(tabs[0])
 				} else {
 					CDP.New((err, tab) => {
 						if (err) {
 							callback(`cannot create new chrome tab: ${err}`)
 						} else {
-							console.log("connecting to a new tab")
+							//console.log("connecting to a new tab")
 							connectToTab(tab)
 						}
 					})

@@ -18,15 +18,17 @@ nick.newTab().then(async (tab) => {
 	console.log(`>> open: ${code} ${status} ${newUrl}`)
 
 	try {
-		await tab.waitUntilVisible([
+		var matchedSelector = await tab.waitUntilVisible([
 			'#email',
 			'body > div > div'
-		], 30000)
+		], 30000, "or")
 	} catch (e) {
 		const filename = await tab.screenshot("error.png")
 		console.log("Screenshot " + filename + " saved")
 		throw e
 	}
+
+	console.log("selector that matched: " + matchedSelector)
 
 	await tab.evaluate({ a: "haha" }, (arg, done) => {
 		const toto = () => { console.log('TOTO !!!') }
@@ -86,8 +88,8 @@ nick.newTab().then(async (tab) => {
 	//const filename = await tab.screenshot("test.png")
 	//console.log("Screenshot " + filename + " saved")
 
-	console.log("Waiting 5s...")
-	await Promise.delay(5000)
+	//console.log("Waiting 5s...")
+	//await Promise.delay(5000)
 
 }).then(() => {
 

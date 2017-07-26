@@ -23,7 +23,7 @@ class TabDriver {
 			return this.__client.Security.setOverrideCertificateErrors({override: true})
 		}).then(() => {
 			if ((this.__options.whitelist.length > 0) || (this.__options.blacklist.length > 0)) {
-				return this.__client.Network.enableRequestInterception({ enabled: true })
+				return this.__client.Network.setRequestInterceptionEnabled({ enabled: true })
 			}
 		}).then(() => {
 			return this.__client.Network.setUserAgentOverride({ userAgent: this.__options.userAgent })
@@ -149,7 +149,7 @@ class TabDriver {
 	__parseCdpResponse(err, res, errorText) {
 		if ((err === true) && _.isPlainObject(res)) {
 			// dev tools protocol error
-			return `${errorText}: DevTools protocol error: ${"TODO"} ${JSON.stringify(res, undefined, 4)}`
+			return `${errorText}: DevTools protocol error: ${"TODO"} ${JSON.stringify(res, undefined, 8)}`
 		} else if (_.isPlainObject(res) && _.isPlainObject(res.exceptionDetails)) {
 			// exception from evaluate() call
 			return `${errorText}: exception thrown from page: ${this.__summarizeException(res)}`
@@ -203,7 +203,6 @@ class TabDriver {
 						this.__client.removeListener("Page.frameNavigated", frameNavigated)
 						const domContentEventFired = () => {
 							this.__client.removeListener("Page.domContentEventFired", domContentEventFired)
-							console.log(">>>>>>>Got dom content")
 							callback(null, status, statusText, newUrl)
 						}
 						this.__client.on("Page.domContentEventFired", domContentEventFired)
@@ -315,8 +314,11 @@ class TabDriver {
 					if (err) {
 						callback(err)
 					} else {
-						// TODO return matching selector if available
-						callback(null, null)
+						if (res && (typeof res.result === "object") && (typeof res.result.value ==="string")) {
+							callback(null, res.result.value)
+						} else {
+							callback(null, null)
+						}
 					}
 				}
 			})
