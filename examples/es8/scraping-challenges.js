@@ -1,8 +1,7 @@
-const Nick = require('../src/Nick')
+const Nick = require('../lib/Nick')
 const Promise = require('bluebird')
 
 const nick = new Nick({
-	driver: "chrome",
 	blacklist: [
 		"sidecar.gitter.Im",
 		/^.*\.woff$/

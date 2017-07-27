@@ -6,7 +6,3 @@
 .gitignore
 .babelrc
 node_modules/
-src/
-examples-casper/src/
-examples-casper/.babelrc
-logo.png
