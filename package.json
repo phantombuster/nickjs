@@ -11,7 +11,8 @@
     "bluebird": "^3.5.0",
     "chrome-remote-interface": "^0.24.2",
     "lodash": "^4.17.4",
-    "needle": "^1.6.0"
+    "needle": "^1.6.0",
+    "once": "^1.4.0"
   },
   "devDependencies": {
     "babel-cli": "6.24.1",
