@@ -2,5 +2,6 @@
   "retainLines": true,
   "comments": false,
   "presets": ["env"],
-  "plugins": ["transform-runtime", "lodash"]
+  "plugins": ["transform-runtime", "lodash"],
+  "ignore": "skel/*.js"
 }

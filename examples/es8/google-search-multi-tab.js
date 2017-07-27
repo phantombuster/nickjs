@@ -1,5 +1,6 @@
-import Nick from '../Nick'
-import Promise from 'bluebird'
+require('babel-polyfill')
+const Nick = require("../../lib/Nick")
+const Promise = require("bluebird")
 
 const nick = new Nick()
 
@@ -11,11 +12,10 @@ const tab1Promise = nick.newTab().then(async function(tab) {
 	await tab.waitUntilVisible(['input[name="q"]', 'form[name="f"]'])
 
 	console.log('TAB 1: Filling the form')
-	await tab.fill('form[name="f"]', { q: 'this is just a test' })
-	await tab.sendKeys('form[name="f"]', tab.driver.casper.page.event.key.Enter)
+	await tab.fill('form[name="f"]', { q: 'this is just a test' }, { submit: true })
 
 	console.log('TAB 1: Waiting for the results')
-	await tab.waitUntilVisible('#fbar')
+	await tab.waitUntilVisible('div#navcnt')
 
 	console.log('TAB 1: Getting the title')
 	try {
@@ -43,18 +43,15 @@ const tab2Promise = nick.newTab().then(async function(tab) {
 	await tab.waitUntilVisible(['input[name="q"]', 'form[name="f"]'])
 
 	console.log('TAB 2: Filling the form')
-	await tab.fill('form[name="f"]', { q: 'phantombuster' })
-	await tab.sendKeys('form[name="f"]', tab.driver.casper.page.event.key.Enter)
+	await tab.fill('form[name="f"]', { q: 'phantombuster' }, { submit: true })
 
 	console.log('TAB 2: Waiting for the results')
-	await tab.waitUntilVisible('#fbar')
+	await tab.waitUntilVisible('div#navcnt')
 
 	console.log('TAB 2: Waiting 5s')
 	await Promise.delay(5000)
-	//tab.driver.casper.page.clearMemoryCache()
 	console.log('TAB 2: Getting the title')
 	try {
-		//await tab.inject('https://code.jquery.com/jquery-3.2.1.min.js')
 		await tab.inject('https://code.jquery.com/jquery-3.1.1.min.js')
 	} catch(e) {
 		console.log('TAB 2 inject exception: ' + e)

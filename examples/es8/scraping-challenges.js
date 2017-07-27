@@ -1,4 +1,5 @@
-const Nick = require('../lib/Nick')
+require("babel-polyfill")
+const Nick = require('../../lib/Nick')
 const Promise = require('bluebird')
 
 const nick = new Nick({
@@ -50,8 +51,7 @@ nick.newTab().then(async (tab) => {
 		"password": "johnjohn"
 	}, { submit: true })
 
-	console.log("Waiting 1s...")
-	await Promise.delay(1000)
+	await tab.untilVisible("div.name.property-value")
 
 	filename = await tab.screenshot("test2.png")
 	console.log("Screenshot " + filename + " saved")

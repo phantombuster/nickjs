@@ -1,6 +1,6 @@
-import 'babel-polyfill'
-import Nick from '../../lib/Nick'
-import Promise from 'bluebird'
+require('babel-polyfill')
+const Nick = require("../../lib/Nick")
+const Promise = require("bluebird")
 
 const nick = new Nick()
 
@@ -11,15 +11,14 @@ nick.newTab().then(async function(tab) {
 	console.log(JSON.stringify(openRet, undefined, 2))
 
 	const test = await tab.evaluate((arg, done) => {
-		__utils__.echo(arg)
+		//__utils__.echo(arg)
 		done(null, [1, 2, 3])
 	})
 	console.log('eval result: ' + JSON.stringify(test, undefined, 2))
 
 	await tab.waitUntilVisible(['input[name="q"]', 'form[name="f"]'])
-	await tab.fill('form[name="f"]', { q: 'this is just a test' })
-	await tab.sendKeys('form[name="f"]', tab.driver.casper.page.event.key.Enter)
-	await tab.waitUntilVisible('#fbar')
+	await tab.fill('form[name="f"]', { q: 'this is just a test' }, { submit: true })
+	await tab.waitUntilVisible('div#navcnt')
 
 
 	console.log('Saving screenshot as google.png...')
