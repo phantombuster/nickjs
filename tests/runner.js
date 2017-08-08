@@ -1,13 +1,11 @@
-const scriptsFolder = "tests/scripts"
-
 // Build the array of testing scripts with their expected results
 const fs = require("fs")
 const testArray = []
-fs.readdirSync(`${scriptsFolder}/es8`).forEach((scriptName) => {
+fs.readdirSync(`tests/es8`).forEach((scriptName) => {
 	if (require("path").extname(scriptName) === ".js") {
 		testArray.push({
 			scriptName: scriptName,
-			expected: JSON.parse(fs.readFileSync(`./${scriptsFolder}/${scriptName.slice(0, -3)}.json`))
+			expected: JSON.parse(fs.readFileSync(`./tests/${scriptName.slice(0, -3)}.json`))
 		})
 	}
 })
@@ -15,8 +13,8 @@ fs.readdirSync(`${scriptsFolder}/es8`).forEach((scriptName) => {
 const tape = require("tape")
 
 const makeTest = (binaryName, binaryPath, esVersion, test) => {
-	tape(`${binaryName} ${esVersion} ${test.scriptName}`, { timeout: 10000 }, (assert) => {
-		const bot = require("child_process").spawn(binaryPath, [`${scriptsFolder}/${esVersion}/${test.scriptName}`])
+	tape(`[${esVersion}] ${binaryName}: ${test.scriptName}`, { timeout: 10000 }, (assert) => {
+		const bot = require("child_process").spawn(binaryPath, [`tests/${esVersion}/${test.scriptName}`])
 		const expectedOutput = test.expected.stdout.slice()
 		let buffer = ""
 		bot.stdout.on("data", (data) => {
@@ -43,6 +41,12 @@ const makeTest = (binaryName, binaryPath, esVersion, test) => {
 			}
 			assert.equal(code, 0, "exit code")
 			assert.end()
+		})
+		process.on("exit", () => {
+			try {
+				bot.kill()
+			} catch (e) {
+			}
 		})
 	})
 }

@@ -1,5 +1,7 @@
-const Nick = require("nickjs")
-const nick = new Nick({ userAgent: "Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.36" })
+const Nick = require("../../lib/Nick")
+const nick = new Nick({
+	userAgent: "Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.36"
+})
 
 const testLog = (text) => {
 	console.log(`>> ${text}`)
@@ -29,7 +31,7 @@ nick.newTab().then((tab) => {
 	})
 	.then(() => {
 		testLog("Inject distant file done")
-		return tab.screenshot("scraping-challenge-03.jpg")
+		return tab.screenshot("tests/download/scraping-challenge-03.jpg")
 	})
 	.then(() => {
 		testLog("Screenshot done")

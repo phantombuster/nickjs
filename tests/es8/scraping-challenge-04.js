@@ -1,4 +1,4 @@
-const Nick = require("nickjs")
+const Nick = require("../../lib/Nick")
 const nick = new Nick({	userAgent: "Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.36" })
 
 const scrape = (arg, done) => {
@@ -44,7 +44,7 @@ nick.newTab((err, tab) => {
 					tab.evaluate(scrape, (err, result) => {
 						exitWithError(err)
 						testLog("Evaluate done")
-						tab.screenshot("scraping-challenge-04.jpg", (err) => {
+						tab.screenshot("tests/download/scraping-challenge-04.jpg", (err) => {
 							exitWithError(err)
 							testLog("Screenshot done")
 							testLog(`Tenth result: ${result[9].name}`)

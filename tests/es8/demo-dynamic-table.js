@@ -1,4 +1,4 @@
-const Nick = require("nickjs")
+const Nick = require("../../lib/Nick")
 const nick = new Nick()
 
 const testLog = (text) => {
@@ -39,7 +39,7 @@ const scrape = (arg, callback) => {
 	testLog("Button clicked")
 	await tab.waitUntilVisible("table > tbody > tr > th")
 	testLog("Page loaded")
-	await tab.screenshot("demo-dynamic-table.png")
+	await tab.screenshot("tests/download/demo-dynamic-table.png")
 	testLog("Screenshot done")
 	const res = await tab.evaluate(scrape)
 	testLog("Evaluate done")

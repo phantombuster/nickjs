@@ -1,4 +1,4 @@
-const Nick = require("../../../lib/Nick")
+const Nick = require("../../lib/Nick")
 const nick = new Nick()
 
 const testLog = (text) => {

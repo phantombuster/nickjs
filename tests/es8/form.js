@@ -1,4 +1,4 @@
-const Nick = require("nickjs")
+const Nick = require("../../lib/Nick")
 const nick = new Nick()
 
 const wait = (time) => {
