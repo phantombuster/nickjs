@@ -15,19 +15,23 @@
     "once": "^1.4.0"
   },
   "devDependencies": {
-    "babel-cli": "6.24.1",
-    "babel-polyfill": "6.23.0",
-    "babel-plugin-lodash": "3.2.11",
-    "babel-plugin-transform-runtime": "6.23.0",
-    "babel-preset-env": "1.3.3"
+    "babel-cli": "^6.24.1",
+    "babel-plugin-lodash": "^3.2.11",
+    "babel-plugin-transform-runtime": "^6.23.0",
+    "babel-polyfill": "^6.23.0",
+    "babel-preset-env": "^1.3.3",
+    "tape": "^4.7.0"
   },
   "scripts": {
+    "test": "tape tests/scriptRunner.js",
     "build": "babel lib/es8 -d lib/es5",
     "build:watch": "npm run build -- --watch",
     "build-and-fix-casper": "babel lib/es8 -d lib/es5 && sed -i '1s/^/var require = patchRequire(require);/' lib/es5/casper/TabDriver.js",
     "build-and-fix-casper:watch": "while true; do inotifywait -e close_write lib/es8/*.js lib/es8/*/*.js; npm run build-and-fix-casper; done",
     "build-examples": "babel examples/es8 -d examples/es5",
-    "build-examples:watch": "npm run build-examples -- --watch"
+    "build-examples:watch": "npm run build-examples -- --watch",
+    "build-tests": "babel tests/scripts/es8 -d tests/scripts/es5",
+    "build-tests:watch": "npm run build-tests -- --watch"
   },
   "repository": {
     "type": "git",

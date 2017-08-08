@@ -1,0 +1,12 @@
+{
+	"retainLines": true,
+	"presets": [
+		["env", {
+			"exclude": [
+				"es6.symbol",
+				"transform-es2015-typeof-symbol"
+			],
+			"loose": true
+		}]
+	]
+}
