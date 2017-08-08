@@ -1,0 +1,25 @@
+{
+	"stdout": [
+		">> Page opened",
+		">> Page loaded",
+		">> Form filled",
+		">> Checkbox set to true",
+		">> Color set to #35C2DB",
+		">> Date set to 2017-08-08",
+		">> Email set to test@phantombuster.com",
+		">> Number set to 20",
+		">> Radio set to true",
+		">> Range set to 1",
+		">> Text set to NickJS test",
+		">> Form filled",
+		">> Checkbox set to false",
+		">> Color set to #35C2CB",
+		">> Date set to 2000-01-01",
+		">> Email set to tst@phantombuster.com",
+		">> Number set to 10",
+		">> Radio set to false",
+		">> Range set to 10",
+		">> Text set to NickJS2 test"
+	],
+	"files": []
+}

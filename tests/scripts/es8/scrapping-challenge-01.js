@@ -22,7 +22,7 @@ const scrape = (arg, done) => {
 	testLog("Page opened")
 	await tab.waitUntilVisible(".panel-body")
 	testLog("Page loaded")
-	await tab.inject("./assets/jquery-3.2.1.min.js")
+	await tab.inject("../assets/jquery-3.2.1.min.js")
 	testLog("Local jQuery injected")
 	const result = await tab.evaluate(scrape)
 	testLog("Evaluate done")
