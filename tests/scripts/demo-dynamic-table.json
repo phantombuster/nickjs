@@ -1,0 +1,15 @@
+{
+	"stdout": [
+		">> Tab created",
+		"> Tab 1: Navigation: http://demo.phantombuster.com/dynamic-table/index.php",
+		">> Page opened",
+		">> Page loaded",
+		">> Button clicked",
+		"> Tab 1: Navigation: http://demo.phantombuster.com/dynamic-table/index.php",
+		">> Page loaded",
+		">> Screenshot done",
+		">> Evaluate done",
+		">> Atleast one result from the table"
+	],
+	"files": []
+}

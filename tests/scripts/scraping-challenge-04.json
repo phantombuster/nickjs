@@ -9,6 +9,6 @@
 		">> Number of results: 100"
 	],
 	"files": [
-		{ "name": "scrapping-challenge-04.js", "minSize": "150000"}
+		{ "name": "scraping-challenge-04.js", "minSize": "150000"}
 	]
 }

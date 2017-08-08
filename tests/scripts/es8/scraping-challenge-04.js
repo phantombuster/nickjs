@@ -44,7 +44,7 @@ nick.newTab((err, tab) => {
 					tab.evaluate(scrape, (err, result) => {
 						exitWithError(err)
 						testLog("Evaluate done")
-						tab.screenshot("scrapping-challenge-04.jpg", (err) => {
+						tab.screenshot("scraping-challenge-04.jpg", (err) => {
 							exitWithError(err)
 							testLog("Screenshot done")
 							testLog(`Tenth result: ${result[9].name}`)

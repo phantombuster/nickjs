@@ -29,7 +29,7 @@ nick.newTab().then((tab) => {
 	})
 	.then(() => {
 		testLog("Inject distant file done")
-		return tab.screenshot("scrapping-challenge-03.jpg")
+		return tab.screenshot("scraping-challenge-03.jpg")
 	})
 	.then(() => {
 		testLog("Screenshot done")
