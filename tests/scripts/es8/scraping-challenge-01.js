@@ -26,7 +26,7 @@ const scrape = (arg, done) => {
 	testLog("Local jQuery injected")
 	const result = await tab.evaluate(scrape)
 	testLog("Evaluate done")
-	await tab.screenshot("scrapping-challenge-01.jpg")
+	await tab.screenshot("scraping-challenge-01.jpg")
 	testLog("Screenshot done")
 	testLog(`Tenth result: ${result[9].name}`)
 	testLog(`Result size: ${result.length}`)
