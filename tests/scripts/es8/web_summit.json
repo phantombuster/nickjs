@@ -1,0 +1,12 @@
+{
+	"stdout": [
+		">> Tab created",
+		">> Page opened",
+		">> Page loaded",
+		">> Scroll done",
+		">> Scrape done",
+		">> Tenth startup: Domraider",
+		">> Atleast 100 startups"
+	],
+	"files": []
+}

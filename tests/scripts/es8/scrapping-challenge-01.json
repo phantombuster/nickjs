@@ -1,0 +1,15 @@
+{
+	"stdout": [
+		">> Tab created",
+		">> Page opened",
+		">> Page loaded",
+		">> Local jQuery injected",
+		">> Evaluate done",
+		">> Screenshot done",
+		">> Tenth result: Mr Antoni Yasbeck",
+		">> Result size: 100"
+	],
+	"files": [
+		{ "name": "scrapping-challenge-01.jpg", "minSize": "150000" }
+	]
+}

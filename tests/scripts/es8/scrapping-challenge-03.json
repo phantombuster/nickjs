@@ -1,0 +1,16 @@
+{
+	"stdout": [
+		">> Tab created",
+		">> User-Agent is: Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.36",
+		">> Page opened",
+		">> Page loaded",
+		">> Inject distant file done",
+		">> Screenshot done",
+		">> Evaluate done",
+		">> Tenth result: Mr Antoni Yasbeck",
+		">> Number of results: 100"
+	],
+	"files": [
+		{ "name": "scrapping-challenge-03.jpg", "minSize": "150000" }
+	]
+}

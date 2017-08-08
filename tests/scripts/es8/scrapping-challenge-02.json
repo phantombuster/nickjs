@@ -1,0 +1,11 @@
+{
+	"stdout": [
+		">> Page number 1 scraped",
+		">> Page number 2 scraped",
+		">> Page number 3 scraped",
+		">> All pages scraped",
+		">> First result: Mr Aaron Willer",
+		">> Number of results: 6"
+	],
+	"files": []
+}
