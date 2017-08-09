@@ -1,14 +1,14 @@
 const tape = require("tape")
 process.setMaxListeners(0) // we'll listen to process.on("exit") a lot because we're going to spawn many childs
 
-// Build the array of testing scripts with their expected results
+// Build the array of testing scripts with their info
 const fs = require("fs")
 const testArray = []
 fs.readdirSync(`tests/es8`).forEach((scriptName) => {
 	if (require("path").extname(scriptName) === ".js") {
 		testArray.push({
 			scriptName: scriptName,
-			expected: JSON.parse(fs.readFileSync(`./tests/${scriptName.slice(0, -3)}.json`))
+			info: JSON.parse(fs.readFileSync(`./tests/${scriptName.slice(0, -3)}.json`))
 		})
 	}
 })
@@ -19,7 +19,7 @@ const makeTest = (binaryName, binaryPath, esVersion, test) => {
 	tape(`[${esVersion}] ${binaryName}: ${test.scriptName}`, { timeout: 30000 }, (assert) => {
 
 		const bot = require("child_process").spawn(binaryPath, [`tests/${esVersion}/${test.scriptName}`])
-		const expectedOutput = test.expected.stdout.slice() // clone the array because we need a complete one later
+		const expectedOutput = test.info.stdout.slice() // clone the array because we need a complete one later
 
 		let nbMatches = 0
 		let lastMatchPos = 0
@@ -74,7 +74,7 @@ const makeTest = (binaryName, binaryPath, esVersion, test) => {
 			assert.equal(code, 0, "exit code is 0")
 
 			// Verify the files
-			for (const file of test.expected.files) {
+			for (const file of test.info.files) {
 				try {
 					const stat = fs.statSync(file.name)
 					assert.pass(`file ${file.name} is present`)
