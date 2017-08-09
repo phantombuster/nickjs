@@ -53,20 +53,20 @@ const makeTest = (binaryName, binaryPath, esVersion, test) => {
 				for (const missedOutput of expectedOutput) {
 					if (isFirstMiss) {
 						assert.fail(missedOutput) // Only mark the first non-match as a failure
+						if (output.length) {
+							// We directly log to stdout, but it's okay because we run tap-spec on top, it's going to be pretty
+							if (nbMatches > 0) {
+								console.log(output.substr(0, lastMatchPos) + `\n^^^^^^ ${nbMatches} test${nbMatches > 1 ? 's' : ''} passed above this line ^^^^^^\n` + output.substr(lastMatchPos))
+							} else {
+								console.log(output)
+							}
+						} else {
+							console.log("Child process did not write to stdout")
+						}
 					} else {
 						assert.skip(missedOutput) // Others are skipped for a cleaner test log
 					}
 					isFirstMiss = false
-				}
-				if (output.length) {
-					// We directly log to stdout, but it's okay because we run tap-spec on top, it's going to be pretty
-					if (nbMatches > 0) {
-						console.log(output.substr(0, lastMatchPos) + `\n^^^^^^ ${nbMatches} test${nbMatches > 1 ? 's' : ''} passed above this line ^^^^^^\n` + output.substr(lastMatchPos))
-					} else {
-						console.log(output)
-					}
-				} else {
-					assert.comment("Child process did not write to stdout")
 				}
 			}
 
