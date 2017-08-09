@@ -27,6 +27,7 @@ const makeTest = (binaryName, binaryPath, esVersion, test) => {
 
 		// Process the bot's stdout in a streaming fashion
 		bot.stdout.on("data", (data) => {
+			console.log(" ==> " + data)
 			output += data
 			if (expectedOutput.length > 0) {
 				while (true) {
@@ -42,6 +43,10 @@ const makeTest = (binaryName, binaryPath, esVersion, test) => {
 					}
 				}
 			}
+		})
+
+		bot.stderr.on("data", (data) => {
+			console.log(" xx> " + data)
 		})
 
 		// The bot has finished
@@ -70,7 +75,7 @@ const makeTest = (binaryName, binaryPath, esVersion, test) => {
 			}
 
 			// Make sure the bot exited with 0
-			assert.equal(code, 0, "exit code")
+			assert.equal(code, 0, "exit code is 0")
 
 			// Verify the files
 			for (const file of test.expected.files) {
