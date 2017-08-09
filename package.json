@@ -26,7 +26,7 @@
     "tape": "^4.7.0"
   },
   "scripts": {
-    "test": "rm -fv tests/download/* && tape tests/runner.js",
+    "test": "rm -fv tests/download/* && faucet tests/runner.js",
     "build": "babel lib/es8 -d lib/es5",
     "build:watch": "npm run build -- --watch",
     "build-and-fix-casper": "babel lib/es8 -d lib/es5 && sed -i '1s/^/var require = patchRequire(require);/' lib/es5/casper/TabDriver.js",
