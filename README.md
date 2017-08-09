@@ -5,10 +5,11 @@
 </p>
 
 <p align="center">
-  A modern headless browser library, as simple as it is powerful.
+  Powerful web scraping tool made by the <a href="https://phantombuster.com">Phantombuster</a> team. Modern, simple & works on all websites.
 </p>
 
 <p align="center">
+  <a href="https://travis-ci.org/phantombuster/nickjs"><img alt="Travis CI build status" src="https://img.shields.io/travis/phantombuster/nickjs.svg?style=flat-square"></a>
   <a href="https://www.npmjs.com/package/nickjs"><img alt="NPM version" src="https://img.shields.io/npm/v/nickjs.svg?style=flat-square"></a>
   <a href="https://gitter.im/phantombuster/nickjs"><img alt="Gitter room" src="https://img.shields.io/gitter/room/Phantombuster/Lobby.svg?style=flat-square"></a>
   <a href="https://twitter.com/phbuster"><img alt="Twitter follow" src="https://img.shields.io/twitter/follow/phbuster.svg?style=social&label=Follow"></a>
@@ -19,7 +20,7 @@
 </p>
 
 * Simple high-level API
-* Async-await ready (also supports callbacks)
+* Supports async/await, Promises and callback coding styles
 * Built to support any driver (today PhantomJS+CasperJS; Chrome headless coming soon)
 
 NickJS started as a very basic need to simplify our lives writing lines of PhantomJS.
