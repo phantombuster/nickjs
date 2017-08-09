@@ -27,7 +27,6 @@ const makeTest = (binaryName, binaryPath, esVersion, test) => {
 
 		// Process the bot's stdout in a streaming fashion
 		bot.stdout.on("data", (data) => {
-			console.log(" ==> " + data)
 			output += data
 			if (expectedOutput.length > 0) {
 				while (true) {
@@ -45,10 +44,6 @@ const makeTest = (binaryName, binaryPath, esVersion, test) => {
 			}
 		})
 
-		bot.stderr.on("data", (data) => {
-			console.log(" xx> " + data)
-		})
-
 		// The bot has finished
 		bot.on("exit", (code) => {
 
@@ -64,10 +59,11 @@ const makeTest = (binaryName, binaryPath, esVersion, test) => {
 					isFirstMiss = false
 				}
 				if (output.length) {
+					// We directly log to stdout, but it's okay because we run tap-spec on top, it's going to be pretty
 					if (nbMatches > 0) {
-						assert.comment(output.substr(0, lastMatchPos) + `\n^^^^^^ ${nbMatches} test${nbMatches > 1 ? 's' : ''} passed above this line ^^^^^^\n` + output.substr(lastMatchPos))
+						console.log(output.substr(0, lastMatchPos) + `\n^^^^^^ ${nbMatches} test${nbMatches > 1 ? 's' : ''} passed above this line ^^^^^^\n` + output.substr(lastMatchPos))
 					} else {
-						assert.comment(output)
+						console.log(output)
 					}
 				} else {
 					assert.comment("Child process did not write to stdout")
