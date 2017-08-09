@@ -12,15 +12,20 @@ const testLog = (text) => {
 }
 
 const checkUrl = (url, checkbox, color, date, email, number, radio, range, text) => {
+	url = decodeURIComponent(url)
 	if(url.indexOf(`checkbox=${(0 + checkbox)}`) >= 0)
 		testLog(`Checkbox set to ${checkbox}`)
 	else
 		testLog("Checkbox set to false")
-	if(url.indexOf(`color=${color.replace("#", "%23")}` >= 0))
+	if(url.indexOf(`color=${color}` >= 0))
 		testLog(`Color set to ${color}`)
-	if(url.indexOf(`date=${date}`) >= 0)
-		testLog(`Date set to ${date}`)
-	if(url.indexOf(`email=${email.replace("@", "%40")}`) >= 0)
+	if(url.indexOf(`date=${date}`) >= 0) {
+		if (date === (new Date()).toISOString().slice(0, 10))
+			testLog("Date set to today's date")
+		else
+			testLog(`Date set to ${date}`)
+	}
+	if(url.indexOf(`email=${email}`) >= 0)
 		testLog(`Email set to ${email}`)
 	if(url.indexOf(`number=${number}`) >= 0)
 		testLog(`Number set to ${number}`)

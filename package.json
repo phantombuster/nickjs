@@ -31,7 +31,7 @@
     "serve-tests": "http-server tests/web -s",
     "build": "babel lib/es8 -d lib/es5",
     "build:watch": "npm run build -- --watch",
-    "build-and-fix-casper": "babel lib/es8 -d lib/es5 && sed -i '1s/^/var require = patchRequire(require);/' lib/es5/casper/TabDriver.js",
+    "build-and-fix-casper": "babel lib/es8 -d lib/es5 && sed -i.bak '1s/^/var require = patchRequire(require);/' lib/es5/casper/TabDriver.js && rm lib/es5/casper/TabDriver.js.bak",
     "build-and-fix-casper:watch": "while true; do inotifywait -e close_write lib/es8/*.js lib/es8/*/*.js; npm run build-and-fix-casper; done",
     "build-examples": "babel examples/es8 -d examples/es5",
     "build-examples:watch": "npm run build-examples -- --watch",
