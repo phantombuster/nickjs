@@ -16,7 +16,7 @@ fs.readdirSync(`tests/es8`).forEach((scriptName) => {
 // Adds a test to the tape stack. Used per script: one for Headless Chrome, one for CasperJS
 const makeTest = (binaryName, binaryPath, esVersion, test) => {
 
-	tape(`[${esVersion}] ${binaryName}: ${test.scriptName}`, (assert) => {
+	tape(`[${esVersion}] ${binaryName}: ${test.scriptName}`, { timeout: 30000 }, (assert) => {
 
 		const bot = require("child_process").spawn(binaryPath, [`tests/${esVersion}/${test.scriptName}`])
 		const expectedOutput = test.expected.stdout.slice() // clone the array because we need a complete one later
