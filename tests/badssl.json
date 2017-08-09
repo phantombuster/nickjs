@@ -1,0 +1,11 @@
+{
+	"stdout": [
+		">> Tab created",
+		">> Page opened",
+		">> Page loaded",
+		">> Screenshot done"
+	],
+	"files": [
+		{ "name": "tests/download/badssl.jpg", "minSize": "40000" }
+	]
+}
