@@ -52,7 +52,7 @@ const testFill = async (tab, checkbox, color, date, email, number, radio, range,
 
 ;(async () => {
 	const tab = await nick.newTab()
-	await tab.open("localhost:3000")
+	await tab.open("localhost:8080/form.html")
 	testLog("Page opened")
 	await tab.waitUntilVisible("form")
 	testLog("Page loaded")

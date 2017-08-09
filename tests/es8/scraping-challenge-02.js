@@ -20,7 +20,7 @@ const scrapePage = async (url) => {
 	const tab = await nick.newTab()
 	await tab.open(url)
 	await tab.waitUntilVisible(".panel-body")
-	await tab.inject("../assets/jquery-3.2.1.min.js")
+	await tab.inject("tests/assets/jquery-3.2.1.min.js")
 	const data = await tab.evaluate(scrape)
 	await tab.close()
 	return data

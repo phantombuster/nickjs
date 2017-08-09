@@ -11,6 +11,6 @@
 		">> Number of results: 100"
 	],
 	"files": [
-		{ "name": "scraping-challenge-03.jpg", "minSize": "150000" }
+		{ "name": "tests/download/scraping-challenge-03.jpg", "minSize": "150000" }
 	]
 }
