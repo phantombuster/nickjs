@@ -10,6 +10,6 @@
 		">> Result size: 100"
 	],
 	"files": [
-		{ "name": "tests/download/scraping-challenge-01.jpg", "minSize": "150000" }
+		{ "name": "tests/download/scraping-challenge-01.jpg", "minSize": "65000" }
 	]
 }

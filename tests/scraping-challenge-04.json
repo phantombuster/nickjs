@@ -1,6 +1,7 @@
 {
 	"stdout": [
-		">> Page opened>> Page loaded",
+		">> Page opened",
+		">> Page loaded",
 		">> Form filled",
 		">> Form page loaded",
 		">> Evaluate done",
@@ -9,6 +10,6 @@
 		">> Number of results: 100"
 	],
 	"files": [
-		{ "name": "tests/download/scraping-challenge-04.js", "minSize": "150000"}
+		{ "name": "tests/download/scraping-challenge-04.jpg", "minSize": "65000"}
 	]
 }
