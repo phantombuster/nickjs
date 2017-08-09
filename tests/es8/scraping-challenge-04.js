@@ -3,12 +3,13 @@ const nick = new Nick({	userAgent: "Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537
 
 const scrape = (arg, done) => {
 	var data = []
-	document.querySelectorAll("div.person > div.panel-body").forEach(function(el, i) {
+	var persons = document.querySelectorAll("div.person > div.panel-body")
+	for (var i = 0; i < persons.length; i++) {
 		data.push({
-			name: el.querySelector(".name").textContent.trim(),
-			birth_year: el.querySelector(".birth_year").textContent.trim()
+			name: persons[i].querySelector(".name").textContent.trim(),
+			birth_year: persons[i].querySelector(".birth_year").textContent.trim()
 		})
-	})
+	}
 	done(null, data)
 }
 

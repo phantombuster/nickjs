@@ -5,7 +5,7 @@
 		">> Form filled",
 		">> Checkbox set to true",
 		">> Color set to #35C2DB",
-		">> Date set to 2017-08-08",
+		">> Date set to today's date",
 		">> Email set to test@phantombuster.com",
 		">> Number set to 20",
 		">> Radio set to true",
