@@ -61,6 +61,9 @@ const testFill = async (tab, checkbox, color, date, email, number, radio, range,
 	testLog("Page opened")
 	await tab.waitUntilVisible("form")
 	testLog("Page loaded")
+	const content = await tab.getContent()
+	if (content.indexOf("<!-- HTML COMMENTS -->") >= 0)
+		testLog("Get content done")
 	var date = new Date();
 	var old = new Date("2000-01-01");
 	var currentDate = date.toISOString().slice(0,10)

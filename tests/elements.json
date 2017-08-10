@@ -1,0 +1,13 @@
+{
+	"stdout": [
+		">> Wait while visible done",
+		">> Wait until visible done",
+		">> Wait until present done",
+		">> Wait while present done",
+		">> Wait while visible fail",
+		">> Wait until visible fail",
+		">> Wait until present fail",
+		">> Wait while present fail"
+	],
+	"files": []
+}

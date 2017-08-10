@@ -2,6 +2,7 @@
 	"stdout": [
 		">> Page opened",
 		">> Page loaded",
+		">> Get content done",
 		">> Form filled",
 		">> Checkbox set to true",
 		">> Color set to #35C2DB",
