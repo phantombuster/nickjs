@@ -11,5 +11,7 @@
 		">> Evaluate done",
 		">> Atleast one result from the table"
 	],
-	"files": []
+	"files": [
+		{ "name": "tests/download/demo-dynamic-table.png", "minSize": "15000" }
+	]
 }

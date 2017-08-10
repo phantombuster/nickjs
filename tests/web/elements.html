@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Elements</title>
+		<meta charset="UTF-8">
+	</head>
+	<body>
+		<div id="first" style="display: block; width: 100px; height: 100px; background-color: yellow;"></div>
+		<div id="second" style="display: none; width: 100px; height: 100px; background-color: blue;"></div>
+		<div id="fourth" style="display: none; width: 100px; height: 100px; background-color: green;"></div>
+		<script>
+			setTimeout(function() {
+				document.getElementById("first").style.display = "none";
+			}, 1000);
+			setTimeout(function() {
+				document.getElementById("second").style.display = "block";
+			}, 2000);
+			setTimeout(function() {
+				var thirdDiv = document.createElement("div");
+				thirdDiv.innerHTML = '<div id="third" style="display: none; width: 100px; height: 100px; background-color: red;"></div>';
+				document.getElementsByTagName("body")[0].appendChild(thirdDiv);
+			}, 3000);
+			setTimeout(function() {
+				document.getElementById("fourth").remove();
+			}, 4000);
+		</script>
+	</body>
+</html>

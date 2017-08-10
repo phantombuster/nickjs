@@ -14,7 +14,7 @@ const scroll = async (tab, previousCount) => {
 	await tab.evaluate(scrollToBottom)
 	try {
 		await tab.waitUntilVisible(`article div.section-content > ul li:nth-child(${previousCount + 1})`)
-		return (await tab.evaluate((arg, done) => { done(null, jQuery("article div.section-content > ul li").length) }))
+		return (await tab.evaluate((arg, done) => { done(null, document.querySelectorAll("article div.section-content > ul li").length) }))
 	} catch (error) {
 		console.log("No new startup to load.")
 		return null
