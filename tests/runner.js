@@ -111,3 +111,7 @@ for (const test of testArray) {
 	makeTest("HeadlessChrome", "node", test, [`tests/es8/${test.scriptName}`])
 	makeTest("CasperJS", "./node_modules/casperjs/bin/casperjs", test, ["--web-security=false", "--ignore-ssl-errors=true", `tests/es5/${test.scriptName}`])
 }
+
+tape.onFinish(() => {
+	console.log(" >>>> tape on finish")
+})
