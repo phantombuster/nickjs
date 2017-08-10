@@ -39,7 +39,7 @@ nick.newTab((err, tab) => {
 			}, {submit: true}, (err) => {
 				exitWithError(err)
 				testLog("Form filled")
-				tab.waitUntilVisible(".person .panel-body", 10000, "or", (err) => {
+				tab.waitUntilVisible(".person .panel-body", (err) => {
 					exitWithError(err)
 					testLog("Form page loaded")
 					tab.evaluate(scrape, (err, result) => {
