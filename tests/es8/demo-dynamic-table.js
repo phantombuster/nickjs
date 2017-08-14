@@ -1,6 +1,8 @@
 const Nick = require("../../lib/Nick")
 const nick = new Nick()
 
+const Promise = require("bluebird")
+
 const testLog = (text) => {
 	console.log(`>> ${text}`)
 }
@@ -44,6 +46,7 @@ const scrape = (arg, callback) => {
 		"_password": "admin"
 	})
 	await tab.click(`input[name="_submit"]`)
+	await Promise.delay(100) // wait so that the string below is guaranteed to be logged after the "form submitted" navigation log
 	testLog("Button clicked")
 	await tab.waitUntilVisible("table > tbody > tr > th")
 	testLog("Page loaded")

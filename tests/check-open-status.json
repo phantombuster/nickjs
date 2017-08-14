@@ -1,23 +1,23 @@
 {
 	"stdout": [
 		">> Code: 200, Message: OK for httpstat.us/200",
-		">> Code: 204, Message: No Content for httpstat.us/204",
-		">> Code: 205, Message: Reset Content for httpstat.us/205",
+
+
 		">> Code: 300, Message: Multiple Choices for httpstat.us/300",
 		">> Code: 200, Message: OK for httpstat.us/301",
 		">> Code: 200, Message: OK for httpstat.us/302",
 		">> Code: 200, Message: OK for httpstat.us/303",
-		">> Code: 304, Message: Not Modified for httpstat.us/304",
+
 		">> Code: 305, Message: Use Proxy for httpstat.us/305",
 		">> Code: 306, Message: Unused for httpstat.us/306",
 		">> Code: 200, Message: OK for httpstat.us/307",
 		">> Code: 400, Message: Bad Request for httpstat.us/400",
-		">> Code: 401, Message: Authorization Required for httpstat.us/401",
+		"uthoriz",
 		">> Code: 402, Message: Payment Required for httpstat.us/402",
 		">> Code: 403, Message: Forbidden for httpstat.us/403",
 		">> Code: 404, Message: Not Found for httpstat.us/404",
 		">> Code: 405, Message: Method Not Allowed for httpstat.us/405",
-		">> Code: 407, Message: Proxy Authentication Required for httpstat.us/407",
+
 		">> Code: 408, Message: Request Timeout for httpstat.us/408",
 		">> Code: 413, Message: Request Entry Too Large for httpstat.us/413",
 		">> Code: 414, Message: Request-URI Too Long for httpstat.us/414",

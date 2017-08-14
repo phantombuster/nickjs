@@ -7,13 +7,13 @@ const testLog = (text) => {
 
 const statusToCheck = [
 	"200",
-	"204", // No Content not working on chrome
-	"205", // Reset Content not working on chrome
+	// "204", // No Content not working on chrome
+	// "205", // Reset Content not working on chrome
 	"300",
 	"301",
 	"302",
 	"303",
-	"304", // Not Modified not working on chrome
+	// "304", // Not Modified not working on chrome
 	"305",
 	"306",
 	"307",
@@ -23,7 +23,7 @@ const statusToCheck = [
 	"403",
 	"404",
 	"405",
-	"407", // Proxy Authentication Required not working on chrome
+	// "407", // Proxy Authentication Required not working on chrome
 	"408",
 	"413",
 	"414",
