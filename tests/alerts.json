@@ -1,0 +1,10 @@
+{
+	"stdout": [
+		">> Tab created",
+		">> Confirm message is: Do you want to continue ?",
+		">> Prompt message is: What's the password ?",
+		">> Page opened",
+		">> Page loaded"
+	],
+	"files": []
+}

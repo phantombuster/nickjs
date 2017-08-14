@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Alerts</title>
+		<meta charset="UTF-8">
+	</head>
+	<body>
+		
+	</body>
+	<script>
+		window.onbeforeunload = function() {
+			return "toto"
+		}
+		alert("Blocking alert")
+		var conf = confirm("Do you want to continue ?")
+		if (conf) {
+			var response = prompt("What's the password ?")
+			if (response === "phantombuster") {
+				var div = document.createElement("div")
+				div.innerHTML = `<div id="div" style="display: block; width: 100px; height: 100px; background-color: red;"></div>`
+				document.body.appendChild(div)
+			}
+		}
+	</script>
+</html>
