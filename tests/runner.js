@@ -13,6 +13,8 @@ fs.readdirSync(`tests/es8`).forEach((scriptName) => {
 	}
 })
 
+const botProcesses = []
+
 // Adds a test to the tape stack. Used per script: one for Headless Chrome, one for CasperJS
 const makeTest = (binaryName, binaryPath, test, binaryOptions) => {
 
@@ -102,6 +104,7 @@ const makeTest = (binaryName, binaryPath, test, binaryOptions) => {
 			} catch (e) {
 			}
 		})
+		botProcesses.push(bot)
 
 	})
 
@@ -112,6 +115,13 @@ for (const test of testArray) {
 	makeTest("CasperJS", "./node_modules/casperjs/bin/casperjs", test, ["--web-security=false", "--ignore-ssl-errors=true", `tests/es5/${test.scriptName}`])
 }
 
+// If a test triggered a tape timeout, the process is probably hanging, preventing graceful node exit
+// so, to be sure, we kill all the processes that we spawned
 tape.onFinish(() => {
-	console.log(" >>>> tape on finish")
+	for (const bot of botProcesses) {
+		try {
+			bot.kill()
+		} catch (e) {
+		}
+	}
 })
