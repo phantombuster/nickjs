@@ -1,0 +1,20 @@
+{
+	"stdout": [
+		">> got an array of cookies",
+		">> we have 0 cookies",
+		">> 'wrong cookies' message is visible",
+		">> we have at least one cookie",
+		">> found a cookie with value sample_value and name phantomCookie",
+		">> Page loaded",
+		">> Local jQuery injected",
+		">> Evaluate done",
+		">> Tenth result: Mr Antoni Yasbeck",
+		">> Result size: 100",
+		">> we have at least two cookies",
+		">> we found our test-cookie-1",
+		">> we have at least one cookie",
+		">> we havent found the deleted cookie",
+		">> all cookies were deleted"
+	],
+	"files": []
+}
