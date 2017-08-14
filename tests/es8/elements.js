@@ -36,7 +36,32 @@ const testLog = (text) => {
 	} catch (error) {
 		testLog("Wait while present fail")
 	}
-	nick.exit(0)
+	if (!await tab.isVisible("#first")) {
+		testLog("Is visisble fail")
+	}
+	if (await tab.isPresent("#third")) {
+		testLog("Is present done")
+	}
+	tab.isVisible("#second", (err, visible) => {
+		if (err) {
+			console.log(err)
+			nick.exit(1)
+		}
+		if (visible) {
+			testLog("Is visible done")
+		}
+		tab.isPresent("#fourth", (err, present) => {
+			if (err) {
+				console.log(err)
+				nick.exit(1)
+			}
+			if (!present) {
+				testLog("Is present fail")
+			}
+			nick.exit(0)
+		})
+	})
+
 })()
 .catch((err) => {
 	console.log(err)

@@ -7,7 +7,11 @@
 		">> Wait while visible fail",
 		">> Wait until visible fail",
 		">> Wait until present fail",
-		">> Wait while present fail"
+		">> Wait while present fail",
+		">> Is visisble fail",
+		">> Is present done",
+		">> Is visible done",
+		">> Is present fail"
 	],
 	"files": []
 }
