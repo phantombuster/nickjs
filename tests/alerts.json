@@ -6,5 +6,7 @@
 		">> Page opened",
 		">> Page loaded"
 	],
-	"files": []
+	"files": [],
+	"comment": "Cannot get page.confirm and page.prompt filters to work on CasperJS so we skip it",
+	"skip": ["CasperJS"]
 }

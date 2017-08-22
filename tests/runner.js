@@ -20,6 +20,12 @@ const makeTest = (binaryName, binaryPath, test, binaryOptions) => {
 
 	tape(`${binaryName}: ${test.scriptName}`, { timeout: 30000 }, (assert) => {
 
+		if (Array.isArray(test.info.skip) && (test.info.skip.indexOf(binaryName) >= 0)) {
+			assert.skip(`This ${binaryName} test is disabled by configuration`)
+			assert.end()
+			return
+		}
+
 		const bot = require("child_process").spawn(binaryPath, binaryOptions)
 		const expectedOutput = test.info.stdout.slice() // clone the array because we need a complete one later
 
