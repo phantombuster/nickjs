@@ -19,8 +19,8 @@ const scrape = (arg, done) => {
 
 	const tab = await nick.newTab()
 
-	await tab.deleteAllCookies()
-	let cookies = await tab.getAllCookies()
+	await nick.deleteAllCookies()
+	let cookies = await nick.getAllCookies()
 	if (Array.isArray(cookies)) {
 		testLog(`got an array of cookies`)
 		testLog(`we have ${cookies.length} cookies`)
@@ -31,12 +31,12 @@ const scrape = (arg, done) => {
 	await tab.waitUntilVisible("div.container div.jumbotron h1")
 	testLog("'wrong cookies' message is visible")
 
-	await tab.setCookie({
+	await nick.setCookie({
 		name: "phantomCookie",
 		value: "sample_value",
 		domain: "scraping-challenges.phantombuster.com"
 	})
-	cookies = await tab.getAllCookies()
+	cookies = await nick.getAllCookies()
 	if (cookies.length >= 1) {
 		testLog(`we have at least one cookie`)
 	}
@@ -71,7 +71,7 @@ const scrape = (arg, done) => {
 		}
 	}
 
-	await tab.deleteCookie("test-cookie-1", "google.fr")
+	await nick.deleteCookie("test-cookie-1", "google.fr")
 	cookies = await tab.getAllCookies()
 	if (cookies.length >= 1) {
 		testLog(`we have at least one cookie`)
