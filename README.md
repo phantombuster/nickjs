@@ -25,7 +25,7 @@
 
 NickJS allows you to automate navigation and collect data from any website. By controlling an instance of either [Headless Chrome](https://developers.google.com/web/updates/2017/04/headless-chrome) or [PhantomJS with CasperJS](http://casperjs.org/), your bots will simulate a human.
 
-It's simple and allows for an easy implementation of our [3 steps of scraping theory](https://blog.phantombuster.com/were-making-web-scraping-so-easy-that-you-re-going-to-love-it-d3efe3a3fad4).
+It's simple and allows for an easy implementation of our [3 scraping steps theory](https://blog.phantombuster.com/were-making-web-scraping-so-easy-that-you-re-going-to-love-it-d3efe3a3fad4).
 
 # Example code
 
@@ -68,11 +68,13 @@ const nick = new Nick()
 
 # Installation
 
-NickJS will choose which headless browser to use depending on how you launch it. When launching your script with `node`, Headless Chrome will be used. When launching with `casperjs`, CasperJS+PhantomJS will be used.
+NickJS will choose which headless browser to use depending on how you launch it. When launching your script with `node`, Headless Chrome will be used. When launched with `casperjs`, CasperJS+PhantomJS will be used.
 
 To get started with the PhantomJS driver, [read this](PHANTOMJS.md). However we recommend using Headless Chrome.
 
-You'll need to have Node 8+ and Chrome 61+ installed on your system. Once this is done, simple `npm install nickjs`. The path to the Chrome executable can be specified with `export CHROME_PATH=/path/to/chrome` otherwise the binary `google-chrome-unstable` will be launched.
+You'll need to have Node 8+ and Chrome 61+ installed on your system. Once this is done, simply `npm install nickjs`. The path to the Chrome executable can be specified with `export CHROME_PATH=/path/to/chrome` otherwise the binary `google-chrome-unstable` will be used.
+
+Lauching a bot is then as simple as `node my_nickjs_script.js`.
 
 # Documentation
 

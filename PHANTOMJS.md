@@ -1,4 +1,4 @@
-Here's how to get started with the CasperJS+PhantomJS driver:
+# Getting started with the CasperJS+PhantomJS driver
 
 **Step 0:** Create the project, install NickJS and its headless browser driver:
 
