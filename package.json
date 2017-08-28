@@ -36,7 +36,9 @@
     "build-examples": "babel examples/es8 -d examples/es5",
     "build-examples:watch": "npm run build-examples -- --watch",
     "build-tests": "babel tests/es8 -d tests/es5",
-    "build-tests:watch": "npm run build-tests -- --watch"
+    "build-tests:watch": "npm run build-tests -- --watch",
+    "build-benchmark": "babel benchmark/es8 -d benchmark/es5",
+    "build-benchmark:watch": "npm run build-benchmark -- --watch"
   },
   "repository": {
     "type": "git",

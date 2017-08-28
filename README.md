@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  Powerful web scraping tool made by the <a href="https://phantombuster.com">Phantombuster</a> team. Modern, simple & works on all websites.
+  Web scraping library made by the <a href="https://phantombuster.com">Phantombuster</a> team. Modern, simple & works on all websites.
 </p>
 
 <p align="center">
@@ -16,185 +16,75 @@
 </p>
 
 <p align="center">
-  <a href="http://nickjs.org">NickJS.org</a> — <a href="https://github.com/phantombuster/nickjs#table-of-content">Inline doc ↓</a> — <b><a href="https://hub.phantombuster.com/v1/reference#nick">Hosted doc</a></b>
+  <a href="http://nickjs.org">NickJS.org</a> — <a href="https://github.com/phantombuster/nickjs#documentation">Inline doc ↓</a> — <b><a href="https://hub.phantombuster.com/v1/reference#nick">Hosted doc</a></b>
 </p>
 
+* Supports both Headless Chrome and PhantomJS as drivers
 * Simple high-level API
-* Supports async/await, Promises and callback coding styles
-* Built to support any driver (today PhantomJS+CasperJS; Chrome headless coming soon)
+* Async/await, Promises and callback coding styles
 
-NickJS started as a very basic need to simplify our lives writing lines of PhantomJS.
-<br>As we started working on [Phantombuster](https://phantombuster.com), we realised we needed a higher-level library, as simple and powerful as possible, and which would be evolutive since it was clear Chrome headless was going to be a big thing.
+NickJS allows you to automate navigation and collect data from any website. By controlling an instance of either [Headless Chrome](https://developers.google.com/web/updates/2017/04/headless-chrome) or [PhantomJS with CasperJS](http://casperjs.org/), your bots will simulate a human.
 
-We hope you'll enjoy using it and to get the discussion started.
+It's simple and allows for an easy implementation of our [3 steps of scraping theory](https://blog.phantombuster.com/were-making-web-scraping-so-easy-that-you-re-going-to-love-it-d3efe3a3fad4).
 
-Feel free to get in touch, suggest pull requests and add your own drivers!
-
-Google search example
----
+# Example code
 
 ```javascript
-import 'babel-polyfill'
-import Nick from 'nickjs'
+const Nick = require("nickjs")
 const nick = new Nick()
 
-nick.newTab().then(async function(tab) {
-    await tab.open('google.com')
-    await tab.waitUntilVisible(['input[name="q"]', 'form[name="f"]'])
-    await tab.fill('form[name="f"]', { q: 'this is just a test' })
-    await tab.sendKeys('form[name="f"]', tab.driver.casper.page.event.key.Enter)
-    await tab.waitUntilVisible('#fbar')
+;(async () => {
 
-    console.log('Saving screenshot as google.png...')
-    await tab.screenshot('google.png')
+	const tab = await nick.newTab()
+	await tab.open("news.ycombinator.com")
 
-    const content = await tab.getContent()
-    console.log('The content has ' + content.toString().length + ' bytes')
+	await tab.untilVisible("#hnmain") // Make sure we have loaded the page
 
-    const url = await tab.getUrl()
-    console.log('The URL is ' + url)
+	await tab.inject("../injectables/jquery-3.0.0.min.js") // We're going to use jQuery to scrape
+	const hackerNewsLinks = await tab.evaluate((arg, callback) => {
+		// Here we're in the page context. It's like being in your browser's inspector tool
+		const data = []
+		$(".athing").each((index, element) => {
+			data.push({
+				title: $(element).find(".storylink").text(),
+				url: $(element).find(".storylink").attr("href")
+			})
+		})
+		callback(null, data)
+	})
 
-    console.log('Injecting jQuery...')
-    await tab.inject('https://code.jquery.com/jquery-3.1.1.slim.min.js')
+	console.log(JSON.stringify(hackerNewsLinks, null, 2))
 
-    console.log('Getting the title...')
-    const title = await tab.evaluate((arg, done) => {
-   	    done(null, jQuery('title').text())
-    })
-    console.log('The title is: ' + title)
+})()
+.then(() => {
+	console.log("Job done!")
+	nick.exit()
 })
-.then(() => nick.exit())
 .catch((err) => {
-    console.log('Oops, an error occurred: ' + err)
-    nick.exit(1)
+	console.log(`Something went wrong: ${err}`)
+	nick.exit(1)
 })
 ```
 
-Begin a new scraping project using the CasperJS+PhantomJS driver
----
+# Installation
 
-**Step 0:** Create the project, install NickJS and its headless browser driver:
+NickJS will choose which headless browser to use depending on how you launch it. When launching your script with `node`, Headless Chrome will be used. When launching with `casperjs`, CasperJS+PhantomJS will be used.
 
-```shell
-mkdir scraping-project
-cd scraping-project/
-npm init -y
+To get started with the PhantomJS driver, [read this](PHANTOMJS.md). However we recommend using Headless Chrome.
 
-# Install NickJS
-npm install nickjs --save
+You'll need to have Node 8+ and Chrome 61+ installed on your system. Once this is done, simple `npm install nickjs`. The path to the Chrome executable can be specified with `export CHROME_PATH=/path/to/chrome` otherwise the binary `google-chrome-unstable` will be launched.
 
-# babel-polyfill is required if we want to run the example scripts
-npm install babel-polyfill --save
-
-# Install the CasperJS+PhantomJS driver
-npm install phantomjs-prebuilt@2.1.14 --save
-npm install casperjs@1.1.3 --save
-
-# Make sure CasperJS finds the PhantomJS executable
-# This is just to have our CasperJS+PhantomJS working. It's not related to NickJS
-export PHANTOMJS_EXECUTABLE=node_modules/phantomjs-prebuilt/lib/phantom/bin/phantomjs
-
-# Note: In the following example, the way NickJS is launched will change in the future
-# (when we'll have our own launcher)
-
-# Test our NickJS project by scraping Google and taking a screenshot
-./node_modules/casperjs/bin/casperjs node_modules/nickjs/examples-casper/lib/google-search-await.js
-# You should now have a google.png file in your project directory
-```
-
-Now that you have NickJS and a driver installed and working, you can start coding your own scraping bot.
-
-**Step 1:** To use Promises and the async-await capabilities of NickJS, we need to install Babel first (and why not Bluebird to have full-featured Promises):
-
-```shell
-npm install babel-polyfill --save # you should already have this one if you followed the steps above
-npm install babel-cli --save
-npm install babel-preset-env --save
-npm install bluebird --save
-```
-
-**Step 2**: Prepare the directory structure for our project. `src/` will contain our modern JavaScript code and `lib/` the compiled, "old JS" code:
-
-```shell
-touch .babelrc
-mkdir src
-mkdir lib
-touch src/myNewBot.js
-```
-
-**Step 3:** We'll create a Babel configuration file `.babelrc` at the root of our project. We exclude some plugins so that `evaluate()` calls work on the pages we're going to scrape/automate.
-
-```json
-{
-	"retainLines": true,
-	"presets": [
-		["env", {
-			"exclude": [
-				"es6.symbol",
-				"transform-es2015-typeof-symbol"
-			],
-			"loose": true
-		}]
-	]
-}
-```
-
-**Step 4:** We'll add two npm scripts to our `package.json` file to facilitate and automate JavaScript compilation:
-
-```json
-...
-    "scripts": {
-        "build": "babel src -d lib",
-        "build:watch": "npm run build -- --watch"
-    }
-...
-```
-
-**Step 5:** We're ready to code our bot:
-
-```shell
-# Code the bot
-$EDITOR src/myNewBot.js
-
-# Compile it from src/ to lib/
-npm run build
-
-# Note: In the following example, the way NickJS is launched will change in the future
-# (when we'll have our own launcher)
-
-# Run it with NickJS
-./node_modules/casperjs/bin/casperjs lib/myNewBot.js
-```
-
-Here is an example of a minimal, boilerplate code for starting your bot:
-
-```javascript
-import 'babel-polyfill'
-import Nick from 'nickjs'
-import Promise from 'bluebird'
-
-const nick = new Nick()
-
-nick.newTab().then(async function(tab) {
-    await tab.open('nickjs.org')
-    // ...
-    // Continue here
-    // ...
-})
-.then(() => nick.exit())
-.catch((err) => {
-    console.log('Oops, an error occurred: ' + err)
-    nick.exit(1)
-})
-```
-
-# Table of content
+# Documentation
 
 + [Nick](#nick)
   + [Nick()](#nickoptions)
+  + [deleteAllCookies()](#deleteallcookiescallback)
+  + [deleteCookie()](#deletecookiecookiename-cookiedomain-callback)
   + [driver](#driver)
   + [exit()](#exitcode)
+  + [getAllCookies()](#getallcookiescallback)
   + [newTab()](#newtab)
+  + [setCookie()](#setcookiecookie-callback)
 + [Nick tab](#nick-tab)
   + [click()](#clickselector-callback)
   + [close()](#closecallback)
@@ -203,13 +93,21 @@ nick.newTab().then(async function(tab) {
   + [getContent()](#getcontentcallback)
   + [getUrl()](#geturlcallback)
   + [inject()](#injecturlorpath--callback)
+  + [isPresent()](#ispresentselectors-conditions-callback)
+  + [isVisible()](#isvisibleselectors-conditions-callback)
+  + [onConfirm](#onconfirm)
+  + [onPrompt](#onprompt)
   + [open()](#openurl--options-callback)
   + [screenshot()](#screenshotfilename--callback)
+  + [scroll()](#scrollx-y,-callback)
+  + [scrollToBottom()](#scrolltobottomcallback)
   + [sendKeys()](#sendkeysselector-keys-options-callback)
+  + [wait()](#waitduration-callback)
+  + [waitUntilPresent()](#waituntilpresentselectors--timeout--condition-callback)
   + [waitUntilVisible()](#waituntilvisibleselectors--timeout--condition-callback)
+  + [waitWhilePresent()](#waitwhilepresentselectors--timeout--condition-callback)
+  + [waitWhileVisible()](#waitwhilevisibleselectors--timeout--condition-callback)
 
-
-# Documentation
 
 
 # Nick
@@ -220,7 +118,7 @@ nick.newTab().then(async function(tab) {
 
 
 
-Nick must be instantiated only once. Behind the scenes, the headless browser driver is initialized. The next step is to open a tab with [newTab()](#nick-newtab).
+Nick must be instantiated only once. Behind the scenes, the headless browser driver is initialized. The next step is to open a tab with [newTab()](https://hub.phantombuster.com/v1/reference#nick-newtab).
 
 ### — [options] `(PlainObject)`
 
@@ -235,13 +133,13 @@ Optional settings for the Nick instance.
 * **`whitelist (Array)`**: soon!
 ##### Basic (ES6+)
 ```javascript
-import Nick from 'nickjs'
+const Nick = require("nickjs")
 const nick = new Nick()
 ```
 
 ##### All options (ES6+)
 ```javascript
-import Nick from 'nickjs'
+const Nick = require("nickjs")
 
 // these are the default options
 const nick = new Nick({
@@ -251,6 +149,49 @@ const nick = new Nick({
   resourceTimeout: 10000,
   userAgent: "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/53.0.2785.143 Safari/537.36"
 })
+```
+
+# deleteAllCookies([callback])
+**Deletes all cookies set to the headless browser.**
+
+### — callback `(Function)`
+
+Function called when finished(*optional*).
+* **`err (String)`**: `null` or a description of what went wrong if something went wrong
+
+
+
+##### Example
+```javascript
+try {
+  await nick.deleteAllCookies()
+  // All cookies are cleanded up
+} catch (err) {
+  console.log("Could not delete all cookies:", err)
+}
+```
+
+##### :no_entry_sign: Warning
+> This method will delete all cookies that might be necessary to your bot.
+
+# deleteCookie(cookieName, cookieDomain[, callback])
+**Deletes a specific cookie set in the headless browser.**
+
+### — callback `(Function)`
+
+Function called when finished(*optional*).
+* **`err (String)`**: `null` or a description of what went wrong if something went wrong.
+
+##### Example
+```javascript
+const cookieName = "cookieName"
+const cookieDomain = ".domain.com"
+
+try {
+  await nick.deleteCookie(cookieName, cookieDomain)
+} catch (err) {
+  console.log("Could not delete cookie:", err)
+}
 ```
 
 # driver
@@ -284,12 +225,32 @@ nick.exit() // All is well
 nick.exit(1) // Something went horribly wrong
 ```
 
+# getAllCookies([callback])
+**Gets an object containing all cookies set in the headless browser.**
+
+### — callback `(Function)`
+
+Function called when finished(*optional*).
+* **`err (String)`**: `null` or a description of what went wrong if something went wrong.
+* **`cookies (PlainObject)`**: an object containing all cookies of the headless browser and their properties
+
+##### Example
+```javascript
+try {
+  const cookies = await nick.getAllCookies()
+  // Cookies contain all your cookies
+  console.log(cookies, null, 2)
+} catch (err) {
+  console.log("Could not get all cookies:", err)
+}
+```
+
 # newTab()
 **Opens a new tab.**
 
 This is the first step in manipulating a website.
 
-To open multiple tabs, call this method multiple times. If your bot opens many tabs to do different tasks, it's a good idea to [close()](#nick-close) them when their work is finished (to keep memory usage down).
+To open multiple tabs, call this method multiple times. If your bot opens many tabs to do different tasks, it's a good idea to [close()](https://hub.phantombuster.com/v1/reference#nick-close) them when their work is finished (to keep memory usage down).
 
 ##### Example
 ```javascript
@@ -298,7 +259,42 @@ try {
   // You can now browse any website using `tab`
 } catch (err) {
   console.log("An error occured:", err)
-  nick.exit(1)
+}
+```
+
+# setCookie(cookie[, callback])
+**Sets a cookie.**
+
+Set the name, the value and the domain of a cookie.
+This cookie can be seen with [getAllCookies()](ref:getallcookies)  and deleted with [deleteAllCookies()](ref:deleteallcookies) or [deleteCookie()](ref:deletecookie).
+
+
+### — cookie `(PlainObject)`
+
+An object containing all attributes of a cookie.
+
+* **`name (String)`**: Name of the cookie you want to set.
+* **`value (String)`**: Value of the cookie you want to set.
+* **`domain (String)`**: Domain linked to the cookie set.
+
+### — callback `(Function)`
+
+Function called when finished(*optional*).
+* **`err (String)`**: `null` or a description of what went wrong if something went wrong.
+
+##### Example
+```javascript
+const cookie = {
+  name: "cookieName",
+  value: "cookieValue",
+  domain: ".domain.com"
+}
+
+try {
+  await nick.setCookie(cookie)
+  // You can navigate with your cookie set
+} catch (err) {
+  console.log("Could not create cookie:", err)
 }
 ```
 
@@ -308,17 +304,17 @@ try {
 # click(selector[, callback])
 **Performs a click on the element matching the CSS selector `selector`.**
 
-Clicking on elements is one of the main ways to manipulate web pages with Nick. Clicking is an easy way to navigate where you want, but keep in mind that it can be more efficient to scrape URLs (for example with [`evaluate()`](#nick-evaluate)) and then call [`open()`](#nick-open).
+Clicking on elements is one of the main ways to manipulate web pages with Nick. Clicking is an easy way to navigate where you want, but keep in mind that it can be more efficient to scrape URLs (for example with [`evaluate()`](https://hub.phantombuster.com/v1/reference#nick-evaluate)) and then call [`open()`](https://hub.phantombuster.com/v1/reference#nick-open).
 
 ### — selector `(String)`
 
 CSS selector targeting what element to click.
-Probably a `button` or a `a` but can be anything you want.
-Make sure the target element is visible or present by calling [`waitUntilVisible()`](#nick-waituntilvisible) or [`waitUntilPresent()`](#nick-waituntilpresent) beforehand.
+Probably a `button` or an `a` but can be anything you want.
+Make sure the target element is visible or present by calling [`waitUntilVisible()`](https://hub.phantombuster.com/v1/reference#nick-waituntilvisible) or [`waitUntilPresent()`](https://hub.phantombuster.com/v1/reference#nick-waituntilpresent) beforehand.
 
 ### — callback `(Function(err))`
 
-Function called when finished(*optional*).
+Function called when finished (*optional*).
 * **`err (String)`**: `null` or a string describing what went wrong with the click (typically the CSS selector did no match any element)
 
 
@@ -333,14 +329,13 @@ try {
   await tab.click(selector)
 } catch (err) {
   console.log("An error occured:", err)
-  nick.exit(1)
 }
 // Continue your navigation in this branch
 // You should probably do a waitUntilVisible() or waitUntilPresent() here
 ```
 
 ##### :warning: Make sure your target is here
-> Before calling `click()` you should make sure the element you are trying to click on is actually visible or present in the page by using [`waitUntilVisible()`](#nick-waituntilvisible) or [`waitUntilPresent()`](#nick-waituntilpresent).
+> Before calling `click()` you should make sure the element you are trying to click on is actually visible or present in the page by using [`waitUntilVisible()`](https://hub.phantombuster.com/v1/reference#nick-waituntilvisible) or [`waitUntilPresent()`](https://hub.phantombuster.com/v1/reference#nick-waituntilpresent).
 
 # close([callback])
 **Closes the `tab` in current use.**
@@ -352,8 +347,8 @@ Lose all references to the instance for it to be garbage-collected and clean coo
 
 ### — callback `(Function)`
 
-Function called when finished(*optional*).
-* **`err (String)`**: `null` or a string describing what went wrong with the click (typically the CSS selector did no match any element)
+Function called when finished (*optional*).
+* **`err (String)`**: `null` or a description of what went wrong if something went wrong
 
 
 
@@ -368,8 +363,7 @@ try {
   // tab can not be used here anymore 
   // but you may continue other actions
 } catch (err) {
-  console.log("Could not close tab: " + err)
-  nick.exit(1)
+  console.log("Could not close tab:", err)
 }
 ```
 
@@ -383,29 +377,29 @@ try {
 > Calling `close()` will clear the cookies and cache of the **whole `nick`** instantiated before.
 
 # evaluate(inPageFunction [, argumentObject, callback])
-**Execute `inPageFunction` in the current page context.**
+**Executes `inPageFunction` in the current page context.**
 
 Nick provides you with **two separate JavaScript contexts**:
 1. **Where the Nick code runs**: this is your script environment, with all your locally declared variables and all your calls to Nick methods
 2. **Where the page code runs**: this is where the page executes jQuery or AngularJS code for example
 
-The `evaluate()` method allows you to declare a function in your Nick context (1) and execute it in the page context (2). **It's like executing code in your browser's inspector tool**: you can do anything you want with the page.
+The `evaluate()` method allows you to declare a function in your Nick context (1) and executes it in the page context (2). **It's like executing code in your browser's inspector tool**: you can do anything you want with the page.
 
 In the page context, you have access to all the global variables declared by the page, as well as the DOM (`window`, `document`, ...). Any JavaScript libraries included by the page can also be used.
 
-If the page does not include what you want (jQuery or underscore for example), you can inject any JavaScript file with [`inject()`](#nick-inject) before calling `evaluate()`.
+If the page does not include what you want (jQuery or underscore for example), you can inject any JavaScript file with [`inject()`](https://hub.phantombuster.com/v1/reference#nick-inject) before calling `evaluate()`.
 
 ### — inPageFunction `(Function(argumentObject, callback))`
 
 Function to execute in the current page context. `argumentObject` will be passed as its first argument and a `callback` as it second argument.
 `argumentObject` is an empty plainObject by default.
 `callback` is the function to call when finished.
-* **`err (String)`**: `null` if the function succeed otherwise put a description of what went wrong
+* **`err (String)`**: `null` if the function succeeds otherwise put a description of what went wrong
 * **`res (Any)`**: return value of `inPageFunction` in case of success (this value is serialized to be transferred back to the Nick context — complex object like DOM elements, functions or jQuery objects cannot be returned to the Nick context reliably)
 
 ### — [argumentObject] `(PlainObject)`
 
-Optional object that will be passed in argument of `inPageFunction`.
+Optional object that will be passed as an argument of `inPageFunction` (*optional*).
 This object is serialized to be transferred to the page context — complex objects like functions or JavaScript modules cannot be passed as argument reliably.
 
 ### — callback `(Function(err, res)`
@@ -430,16 +424,15 @@ const arg = { link: "#header > a.title" }
 
 try {
   const res = await tab.evaluate(scraper, arg)
-  console.log("Scraped this link: " + res)
+  console.log("Scraped this link:", res)
   // Continue your navigation here
 } catch (err) {
-  console.log("Something went wrong: " + err)
-  nick.exit(1)
+  console.log("Something went wrong:", err)
 }
 ```
 
 ##### :no_entry_sign: Local variables not accessible
-> Because `inPageFunction` is executed in the current page context, your local variables that have been declared before your `evaluate()` call will **not** be accessible. You can however transfer variables using the `argumentObject` parameter.
+> Because `inPageFunction` is executed in the current page context, your local variables that have been declared before your `evaluate()` call will **not** be accessible. You can, however, transfer variables using the `argumentObject` parameter.
 
 **For this reason, Nick methods won't be available inside evaluate.**
 
@@ -456,11 +449,12 @@ try {
 
 ### — selector `(String)`
 
-CSS selector targeting what form to fill. It should point to a `form` tag. Make sure the target form is visible or present by calling [`waitUntilVisible()`](#nick-waituntilvisible) or [`waitUntilPresent()`](#nick-waituntilpresent) beforehand.
+CSS selector targeting what form to fill. It should point to a `form` tag. Make sure the target form is visible or present by calling [`waitUntilVisible()`](https://hub.phantombuster.com/v1/reference#nick-waituntilvisible) or [`waitUntilPresent()`](https://hub.phantombuster.com/v1/reference#nick-waituntilpresent) beforehand.
 
 ### — inputs `(PlainObject)`
 
-An object containing the data you want to enter in the form. **Keys must correspond to the inputs' `name` attribute.** This method supports single `select` fields in the same way as normal `input` fields. For `select` fields allowing multiple selections, supply an array of values to match against.
+An object containing the data you want to enter in the form. 
+**Keys must correspond to the inputs' `name` attribute.** This method supports single `select` fields in the same way as normal `input` fields. For `select` fields allowing multiple selections, supply an array of values to match against.
 
 ### — options `(Boolean)`
 
@@ -494,10 +488,7 @@ try {
   // You should probably do a waitUntilVisible() or waitUntilPresent() here
 } catch (err) {
   console.log("Form not found:", err)
-  nick.exit(1)
 }
-
-
 ```
 
 ##### Form used in the example (HTML)
@@ -520,8 +511,8 @@ try {
 
 ### — callback `(Function(err))`
 
-Function called when finished(*optional*).
-* **`err (String)`**: `null` or a string describing what went wrong when filling the form.
+Function called when finished (*optional*).
+* **`err (String)`**: `null` or a description of what went wrong if something went wrong
 * **`content (String)`**: the full HTML content of the current webpage.
 
 
@@ -534,7 +525,6 @@ try {
   // content contains the content of the current webpage
 } catch (err) {
   console.log("Could not get the content of the page:", err)
-  nick.exit(1)
 }
 ```
 
@@ -546,8 +536,8 @@ try {
 
 ### — callback `(Function(err))`
 
-Function called when finished(*optional*).
-* **`err (String)`**: `null` or a string describing what went wrong when filling the form.
+Function called when finished (*optional*).
+* **`err (String)`**: `null` or a description of what went wrong if something went wrong
 * **`url (String)`**: the full `URL` of the current page.
 
 
@@ -560,7 +550,6 @@ try {
   // You can use the variable url and continue your actions
 } catch (err) {
   console.log("Could not get the current url:", err)
-  nick.exit(1)
 }
 ```
 
@@ -568,7 +557,7 @@ try {
 > The URL you get will be URL-decoded.
 
 # inject(urlOrPath [, callback])
-**Inject a script in the current DOM page context.**
+**Injects a script in the current DOM page context.**
 
 The script can be stored locally on disk or on a remote server.
 
@@ -578,8 +567,8 @@ Path to a local or remote script.
 
 ### — callback `(Function(err))`
 
-Function called when finished (optional).
-* **`err (String)`**: `null` or a string describing what went wrong
+Function called when finished (*optional*).
+* **`err (String)`**: `null` or a description of what went wrong if something went wrong
 
 ##### Example
 ```javascript
@@ -591,7 +580,98 @@ try {
   //You may now use tab.evaluate() and use jQuery functions
 } catch (err) {
   console.log("Could not inject jQuery:", err)
-  nick.exit(1)
+}
+```
+
+# isPresent(selectors[, conditions, callback])
+**Checks for a list of `selectors` CSS selectors if they are present in the DOM and return a boolean: `true` if the selectors are present and `false` in the contrary.**
+
+### — selectors `(Array or String)`
+
+What to look for in the DOM. Can be an array of CSS selectors (array of strings) or a single CSS selector (string).
+
+### — [condition] `(String)`
+
+When `selectors` is an array, this optional argument lets you choose how to wait for the CSS selectors(*optional*).
+If `condition` is `"and"` (the default), the method will check for the presence of **all** CSS selectors.
+On the other hand, if `condition` is `"or"`, the method will check for the presence of **any** CSS selector.
+
+### — callback `(Function(err, selector))`
+
+Function called when finished (*optional*).
+* **`err (String)`**: `null` or a description of what went wrong if the function fails to check
+* **`visible (Boolean)`**: `true` if the condition succeeds or `false` in the contrary
+##### Example
+```javascript
+const selectors = ["div.first", "div.second"]
+
+const present = await tab.isPresent(selectors, "or")
+if (present) {
+  // Either .first or .second is present at this time
+} else {
+  console.log("Elements aren't present")
+}
+```
+
+# isVisible(selectors[, conditions, callback])
+**Checks for a list of `selectors` CSS selectors if they are visible in the page and return a boolean: `true` if the selectors are visible and `false` in the contrary.**
+
+### — selectors `(Array or String)`
+
+What to check for. Can be an array of CSS selectors (array of strings) or a single CSS selector (string).
+
+### — [condition] `(String)`
+
+When `selectors` is an array, this optional argument lets you choose how to wait for the CSS selectors (*optional*).
+If `condition` is `"and"` (the default), the method will check for the visibility of **all** CSS selectors.
+On the other hand, if `condition` is `"or"`, the method will check for the visibility of **any** CSS selector.
+
+### — callback `(Function(err, selector))`
+
+Function called when finished (*optional*).
+* **`err (String)`**: `null` or a description of what went wrong if the function fails to check
+* **`visible (Boolean)`**: `true` if the condition succeeds or `false` in the contrary
+##### Example
+```javascript
+const selectors = ["div.first", "div.second"]
+
+const visible = await tab.isVisible(selectors, "or")
+if (visible) {
+  // Either .first or .second is visible at this time
+} else {
+  console.log("Elements aren't visible")
+}
+```
+
+# onConfirm
+**Sets an event to a JS confirm alert.**
+Executes the function assigned to this variable whenever a confirm dialog is called by `window.confirm`.
+The only parameter is the message sent by the dialog, and the function needs to return the user's response as a boolean.
+
+### — message `(String)`
+A string containing the message from the confirm dialog.
+
+##### ES6+
+```javascript
+tab.onConfirm = (message) => {
+  console.log("The confirm messsage is", message)
+  return true
+}
+```
+
+# onPrompt
+**Sets an event to a JS prompt alert.**
+Executes the function assigned to this variable whenever a prompt dialog is called by `window.prompt()`.
+The only parameter is the message sent by the dialog, and the function needs to return the user's response as a string.
+
+### — message `(String)`
+A string containing the message from the prompt dialog.
+
+##### ES6+
+```javascript
+tab.onPrompt = (message) => {
+  console.log("The prompt message is", message)
+  return "Response"
 }
 ```
 
@@ -600,7 +680,7 @@ try {
 
 By default, it's a `GET` but you can forge any type of HTTP request using the `options` parameter.
 
-Opening a page will time out after 10 seconds. This can be changed with the `resourceTimeout` Nick option (see [Nick's options](#nick)). Note: this time out concerns the initial page but not the resources the page requires thereafter.
+Opening a page will time out after 10 seconds. This can be changed with the `resourceTimeout` Nick option (see [Nick's options](https://hub.phantombuster.com/v1/reference#nick)). Note: this time out concerns the initial page but not the resources the page requires thereafter.
 
 ### — url `(String)`
 
@@ -628,16 +708,14 @@ try {
   const [httpCode, httpStatus] = await tab.open(url)
   
   if ((httpCode >= 300) || (httpCode < 200)) {
-    console.log("The site responded with " + httpCode + " " + httpStatus)
-    nick.exit(1)
+    console.log("The site responded with", httpCode, httpStatus)
   } else {
-    console.log("Successfully opened " + url + ": " + httpCode + " " + httpStatus)
+    console.log("Successfully opened", url, ":", httpCode, httpStatus)
     // Manipulate the page in this branch
     // You should probably do a waitUntilVisible() or waitUntilPresent() here
   }
 } catch(err) {
-  console.log("Could not open page: " + err)
-  nick.exit(1)
+  console.log("Could not open page:", err)
 }
 
 ```
@@ -660,10 +738,10 @@ try {
 > This method will NOT return an error when the received HTTP isn't 200. An error is returned only when a network error happens. It's your job to check for 404s or 500s with `httpCode` if needed.
 
 ##### :warning: Always wait for DOM elements
-> Many pages on the web load slowly and unreliably. Many more make numerous aynchronous queries. For these reasons, you should always wait for the DOM elements that interest you after opening a page with [`waitUntilVisible()`](#nick-waitUntilVisible)or [`waitUntilPresent()`](#nick-waituntilpresent).
+> Many pages on the web load slowly and unreliably. Many more make numerous aynchronous queries. For these reasons, you should always wait for the DOM elements that interest you after opening a page with [`waitUntilVisible()`](https://hub.phantombuster.com/v1/reference#nick-waitUntilVisible)or [`waitUntilPresent()`](https://hub.phantombuster.com/v1/reference#nick-waituntilpresent).
 
 # screenshot(filename [, callback])
-**Take a screenshot of the current page.**
+**Takes a screenshot of the current page.**
 
 ### — path `(String)`
 
@@ -672,8 +750,8 @@ The format is defined by the file extension. 'image.jpg' will create a JPEG imag
 
 ### — callback `(Function(err))`
 
-Function called when finished(*optional*).
-* **`err (String)`**: `null` or a string describing what went wrong when filling the form
+Function called when finished (*optional*).
+* **`err (String)`**: `null` or a description of what went wrong if something went wrong
 
 ##### Example
 ```javascript
@@ -685,12 +763,56 @@ try {
   // Your screenshot is available at this path
 } catch (err) {
   console.log("Could not take a screenshot:", err)
-  nick.exit(1)
+}
+```
+
+# scroll(x, y,[, callback])
+**Scrolls to coordinates `[x,y]` on the page.**
+
+### — x `(Number)`
+The X-axis coordinate in pixels to scroll to (horizontally).
+
+### — y `(Number)`
+The Y-axis coordinate in pixels to scroll to (vertically).
+
+### — callback `(Function(err))`
+Function called when finished (*optional*).
+* **`err (String)`**: `null` or a description of what went wrong if something went wrong
+
+##### Example
+```javascript
+const x = 1000
+const y = 2000
+
+try {
+  await tab.scroll(x, y)
+  // Your position will be [1000, 2000] in the page now
+} catch (err) {
+  console.log("Could not scroll to coordinates:", err)
+}
+```
+
+##### :information_source: Tips
+> _scroll() can also be called using scrollTo()_
+
+# scrollToBottom([callback])
+**Scrolls to the bottom of the page.**
+
+### — callback `(Function(err))`
+Function called when finished (*optional*).
+* **`err (String)`**: `null` or a description of what went wrong if something went wrong
+##### Example
+```javascript
+try {
+  await tab.scrollToBottom()
+  // You are now at the bottom of the page
+} catch (err) {
+  console.log("An error occured during the scroll to bottom:", err)
 }
 ```
 
 # sendKeys(selector, keys[, options, callback])
-**Write `keys` in an `<input>`, `<textarea>` or any DOM element with `contenteditable="true"` in the current page.**
+**Writes `keys` in an `<input>`, `<textarea>` or any DOM element with `contenteditable="true"` in the current page.**
 
 ### — selector `(String)`
 
@@ -711,7 +833,7 @@ The three options available are:
 ### — callback `(Function(err))`
 
 Function called when finished(*optional*).
-* **`err (String)`**: `null` or a string describing what went wrong when filling the form
+* **`err (String)`**: `null` or a description of what went wrong if something went wrong
 
 ##### Example
 ```javascript
@@ -729,7 +851,81 @@ try {
   // You may continue your actions here
 } catch (err) {
   console.log("Could not send keys:", err)
-  nick.exit(1)
+}
+```
+
+# wait(duration[, callback])
+**Wait for `duration` milliseconds.**
+
+
+
+
+### — duration `(Number)`
+The number of milliseconds to wait for.
+
+### — callback `(Function(err))`
+Function called when finished (*optional*).
+* **`err (String)`**: `null` or a description of what went wrong if something went wrong
+##### :no_entry_sign: Warning
+> This function has nothing to do with the tab you are using, it is pure syntactic sugar to replace `Promise.delay()` (from [Bluebird](http://bluebirdjs.com/docs/api/promise.delay.html)).
+It is like waiting in front of your computer after opening a web page.
+
+##### Example
+```javascript
+try {
+  await tab.doSomething()
+  await tab.wait(10000)
+  // After waiting 10 seconds the script continues
+  await tab.doSomething()
+} catch (err) {
+  console.log("An error occured during the execution:", err)
+}
+```
+
+# waitUntilPresent(selectors [, timeout,  condition, callback])
+**Waits for a list of `selectors` CSS selectors to be present in the DOM.**
+Aborts with an error if the elements have not become present in the DOM after `timeout` milliseconds.
+
+`selectors` can be an array of CSS selectors (array of strings) or a single CSS selector (string).
+
+By default, `condition` is `"and"` (wait for **all** CSS selectors) but it can be changed to `"or"` (wait for **any** CSS selector).
+
+### — selectors `(Array or String)`
+
+What to wait for. Can be an array of CSS selectors (array of strings) or a single CSS selector (string).
+
+### — timeout `(Number)`
+
+Maximum number of milliseconds to wait for, by default it is set to 5000(*optional*).
+`callback` will be called with an error if the elements have not become present after `timeout` milliseconds.
+
+### — [condition] `(String)`
+
+When `selectors` is an array, this optional argument lets you choose how to wait for the CSS selectors(*optional*).
+If `condition` is `"and"` (the default), the method will wait for **all** CSS selectors.
+On the other hand, if `condition` is `"or"`, the method will wait for **any** CSS selector.
+
+### — callback `(Function(err, selector))`
+
+Function called when finished(*optional*).
+* **`err (String)`**: `null` or a description of what went wrong if the CSS selectors were not present after `timeout` milliseconds
+* **`selector (String)`**:
+  * In case of success (`err` is `null`):
+    * If condition was `"and"` then `selector` is `null` because all CSS selectors are present
+    * If condition was `"or"` then `selector` is one of the present CSS selectors of the given array
+  * In case of failure (`err` is not `null`):
+    * If condition was `"and"` then `selector` is one of the non-present CSS selectors of the given array
+    * If condition was `"or"` then `selector` is `null` because none of the CSS selectors are present
+##### Example
+```javascript
+const selectors = "#header > h1.big-title"
+const pageTimeout = 5000
+
+try {
+  await tab.waitUntilPresent(selectors, pageTimeout)
+  // The element is present in the DOM
+} catch(err) {
+  console.log("Oh no! Even after 5s, the element was still not present. ", err)
 }
 ```
 
@@ -743,7 +939,7 @@ Aborts with an error if the elements have not become visible after `timeout` mil
 
 `selectors` can be an array of CSS selectors (array of strings) or a single CSS selector (string).
 
-By default, `condition` is `"and"` (wait for the visibility of **all** CSS selectors) but it can be changed to `"or"` (wait for the visibility of **any** CSS selector).
+By default, `condition` is `"and"` (wait for **all** CSS selectors) but it can be changed to `"or"` (wait for **any** CSS selector).
 
 ### — selectors `(Array or String)`
 
@@ -757,8 +953,8 @@ Maximum number of milliseconds to wait for, by default it is set to 5000(*option
 ### — [condition] `(String)`
 
 When `selectors` is an array, this optional argument lets you choose how to wait for the CSS selectors(*optional*).
-If `condition` is `"and"` (the default), the method will wait for the visibility of **all** CSS selectors.
-On the other hand, if `condition` is `"or"`, the method will wait for the visibility of **any** CSS selector.
+If `condition` is `"and"` (the default), the method will wait for **all** CSS selectors.
+On the other hand, if `condition` is `"or"`, the method will wait for **any** CSS selector.
 
 ### — callback `(Function(err, selector))`
 
@@ -781,8 +977,7 @@ try {
   // Manipulate the element here
   // for example with a click() or evaluate()
 } catch(err) {
-  console.log("Oh no! Even after 5s, the element was still not visible. " + err)
-  nick.exit(1)
+  console.log("Oh no! Even after 5s, the element was still not visible:", err)
 }
 ```
 
@@ -796,8 +991,7 @@ try {
   // Manipulate the element here
   // for example with a click() or evaluate()
 } catch(err) {
-  console.log("Oh no! Even after 6s, at least one of the element was still not visible. " + err)
-  nick.exit(1)
+  console.log("Oh no! Even after 6s, at least one of the element was still not visible:", err)
 }
 ```
 
@@ -815,6 +1009,99 @@ try {
   console.log("Oh no! Even after 7s, all the elements were still not visible. " + err)
   // in this case, the callback does not return which element is not visible
   // because ALL the elements are not visible
-  nick.exit(1)
+}
+```
+
+# waitWhilePresent(selectors [, timeout,  condition, callback])
+**Waits for a list of `selectors` CSS selectors to become non-present in the DOM.**
+Aborts with an error if the elements are still present in the DOM after `timeout` milliseconds.
+
+`selectors` can be an array of CSS selectors (array of strings) or a single CSS selector (string).
+
+By default, `condition` is `"and"` (wait for **all** CSS selectors) but it can be changed to `"or"` (wait for **any** CSS selector).
+
+### — selectors `(Array or String)`
+
+What to wait for. Can be an array of CSS selectors (array of strings) or a single CSS selector (string).
+
+### — timeout `(Number)`
+
+The maximum number of milliseconds to wait for, by default it is set to 5000 (*optional*).
+`callback` will be called with an error if the elements are still present after `timeout` milliseconds.
+
+### — [condition] `(String)`
+
+When `selectors` is an array, this optional argument lets you choose how to wait for the CSS selectors (*optional*).
+If `condition` is `"and"` (the default), the method will wait for **all** CSS selectors.
+On the other hand, if `condition` is `"or"`, the method will wait for **any** CSS selector.
+
+### — callback `(Function(err, selector))`
+
+Function called when finished (*optional*).
+* **`err (String)`**: `null` or a description of what went wrong if the CSS selectors were still present after `timeout` milliseconds
+* **`selector (String)`**:
+  * In case of success (`err` is `null`):
+    * If condition was `"and"` then `selector` is `null` because none of the CSS selectors are present
+    * If condition was `"or"` then `selector` is one of the non-present CSS selectors of the given array
+  * In case of failure (`err` is not `null`):
+    * If condition was `"and"` then `selector` is one of the still present CSS selectors of the given array
+    * If condition was `"or"` then `selector` is `null` because all of the CSS selectors are still present
+##### Example
+```javascript
+const selectors = "#header > h1.big-title"
+const pageTimeout = 5000
+
+try {
+  await tab.waitWhilePresent(selectors, pageTimeout)
+  // The selector has succesfully become non-present
+} catch(err) {
+  console.log("Oh no! Even after 5s, the element was still present:", err)
+}
+```
+
+# waitWhileVisible(selectors [, timeout,  condition, callback])
+**Waits for a list of `selectors` CSS selectors to become non-visible.**
+Aborts with an error if the elements are still visible after `timeout` milliseconds.
+
+`selectors` can be an array of CSS selectors (array of strings) or a single CSS selector (string).
+
+By default, `condition` is `"and"` (wait for **all** CSS selectors) but it can be changed to `"or"` (wait for **any** CSS selector).
+
+### — selectors `(Array or String)`
+
+What to wait for. Can be an array of CSS selectors (array of strings) or a single CSS selector (string).
+
+### — timeout `(Number)`
+
+The maximum number of milliseconds to wait for, by default it is set to 5000 (*optional*).
+`callback` will be called with an error if the elements are still visible after `timeout` milliseconds.
+
+### — [condition] `(String)`
+
+When `selectors` is an array, this optional argument lets you choose how to wait for the CSS selectors(*optional*).
+If `condition` is `"and"` (the default), the method will wait for **all** CSS selectors.
+On the other hand, if `condition` is `"or"`, the method will wait for **any** CSS selector.
+
+### — callback `(Function(err, selector))`
+
+Function called when finished(*optional*).
+* **`err (String)`**: `null` or a description of what went wrong if the CSS selectors were still visible after `timeout` milliseconds
+* **`selector (String)`**:
+  * In case of success (`err` is `null`):
+    * If condition was `"and"` then `selector` is `null` because none of the CSS selectors are visible
+    * If condition was `"or"` then `selector` is one of the non-visible CSS selectors of the given array
+  * In case of failure (`err` is not `null`):
+    * If condition was `"and"` then `selector` is one of the still visible CSS selectors of the given array
+    * If condition was `"or"` then `selector` is `null` because all of the CSS selectors are still visible
+##### Example
+```javascript
+const selectors = "#header > h1.big-title"
+const pageTimeout = 5000
+
+try {
+  await tab.waitWhileVisible(selectors, pageTimeout)
+  // The selector has succesfully become non-visible
+} catch(err) {
+  console.log("Oh no! Even after 5s, the element was still visible:", err)
 }
 ```
