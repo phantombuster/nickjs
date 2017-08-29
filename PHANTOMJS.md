@@ -49,7 +49,7 @@ mkdir lib
 touch src/myNewBot.js
 ```
 
-**Step 3:** We'll create a Babel configuration file `.babelrc` at the root of our project. We exclude some plugins so that `evaluate()` calls work on the pages we're going to scrape/automate.
+**Step 3:** We'll create a Babel configuration file `.babelrc` at the root of our project. We exclude some plugins so that `evaluate()` calls work better on the pages we're going to scrape/automate.
 
 ```json
 {
@@ -96,17 +96,20 @@ npm run build
 Here is an example of a minimal, boilerplate code for starting your bot:
 
 ```javascript
-import 'babel-polyfill'
-import Nick from 'nickjs'
-import Promise from 'bluebird'
+require('babel-polyfill')
+const Nick = require('nickjs')
+const Promise = require('bluebird')
 
 const nick = new Nick()
 
 nick.newTab().then(async function(tab) {
+
     await tab.open('nickjs.org')
+
     // ...
     // Continue here
     // ...
+
 })
 .then(() => nick.exit())
 .catch((err) => {
