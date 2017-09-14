@@ -9,4 +9,8 @@ before_script:
   - npm run serve-tests &
   - sleep 1
 addons:
-  chrome: beta
+  apt:
+    sources:
+      - google-chrome
+    packages:
+      - google-chrome-unstable
