@@ -25,6 +25,7 @@ nick.newTab().then(async (tab) => {
 	} catch (e) {
 		const filename = await tab.screenshot("error.png")
 		console.log("Screenshot " + filename + " saved")
+		console.log(await tab.getContent())
 		throw e
 	}
 
