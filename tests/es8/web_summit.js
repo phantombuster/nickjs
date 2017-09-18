@@ -1,17 +1,12 @@
 const Nick = require("../../lib/Nick")
-const nick = new Nick({loadImages: false})
-
-const scrollToBottom = (arg, callback) => {
-	window.scrollTo(0,document.body.scrollHeight)
-	callback()
-}
+const nick = new Nick({loadImages: true})
 
 const testLog = (text) => {
 	console.log(`>> ${text}`)
 }
 
 const scroll = async (tab, previousCount) => {
-	await tab.evaluate(scrollToBottom)
+	await tab.scrollToBottom
 	try {
 		await tab.waitUntilVisible(`article div.section-content > ul li:nth-child(${previousCount + 1})`)
 		return (await tab.evaluate((arg, done) => { done(null, document.querySelectorAll("article div.section-content > ul li").length) }))
