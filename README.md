@@ -66,15 +66,31 @@ const nick = new Nick()
 })
 ```
 
-# Installation
+# Usage
+
+First of all, install NickJS: `npm install nickjs`.
 
 NickJS will choose which headless browser to use depending on how you launch it. When launching your script with `node`, Headless Chrome will be used. When launched with `casperjs`, CasperJS+PhantomJS will be used.
 
 To get started with the PhantomJS driver, [read this](PHANTOMJS.md). However we recommend using Headless Chrome.
 
-You'll need to have Node 8+ and Chrome 61+ installed on your system. Once this is done, simply `npm install nickjs`. The path to the Chrome executable can be specified with `export CHROME_PATH=/path/to/chrome` otherwise the binary `google-chrome-unstable` will be used.
+You'll need to have Node 7+ and Chrome 61+ installed on your system. The path to the Chrome executable can be specified with `export CHROME_PATH=/path/to/chrome` otherwise the binary `google-chrome-unstable` will be used.
 
 Lauching a bot is then as simple as `node my_nickjs_script.js`.
+
+## Environment variables
+
+The following environment variables have an effect on NickJS:
+
+- `NICKJS_LOAD_IMAGES` (0 or 1): disables image loading (equivalent to NickJS' constructor option `loadImages`)
+- `NICKJS_NO_SANDBOX` (0 or 1): disables Chrome's sandboxing (no effect when the CasperJS+PhantomJS driver is used)
+- `NICKJS_PROXY` or `http_proxy`: see below
+
+# HTTP proxy
+
+NickJS supports HTTP (and HTTPS) proxies (other protocols are not yet supported). To specify which proxy to use, set the `httpProxy` option in [NickJS' constructor](https://hub.phantombuster.com/v1/reference#nick). You can also set the environment variable `NICKJS_PROXY` or the standard `http_proxy` (but the constructor option takes precedence).
+
+Your proxy must be specified in the following format: `http://username:password@proxy.com:3128` (the protocol portion is optional).
 
 # Documentation
 
