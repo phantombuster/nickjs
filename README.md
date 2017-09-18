@@ -72,11 +72,17 @@ First of all, install NickJS: `npm install nickjs`.
 
 NickJS will choose which headless browser to use depending on how you launch it. When launching your script with `node`, Headless Chrome will be used. When launched with `casperjs`, CasperJS+PhantomJS will be used.
 
-To get started with the PhantomJS driver, [read this](PHANTOMJS.md). However we recommend using Headless Chrome.
+To get started with the PhantomJS driver, [read this](PHANTOMJS.md). However we recommend using Headless Chrome (read on).
 
-You'll need to have Node 7+ and Chrome 61+ installed on your system. The path to the Chrome executable can be specified with `export CHROME_PATH=/path/to/chrome` otherwise the binary `google-chrome-unstable` will be used.
+You'll need to have Node 7+ and Chrome 63+ installed on your system (read the next section for more info about which Chrome version you should use). The path to the Chrome executable can be specified with `export CHROME_PATH=/path/to/chrome` otherwise the binary `google-chrome-unstable` will be used.
 
-Lauching a bot is then as simple as `node my_nickjs_script.js`.
+Launching a bot is then as simple as `node my_nickjs_script.js`.
+
+## Headless Chrome version
+
+NickJS makes use of the latest DevTools protocol methods, so you'll need a very recent version of Chrome.
+
+At the time of writing, NickJS is using some methods from Chrome 63 which was released not long ago. Having a recent version of Chrome is critical for a smooth experience with NickJS. Go to the [Chrome Release Channels](https://www.chromium.org/getting-involved/dev-channel) page and download a version compatible with your system. If you want this to be taken care of for you, check out [Phantombuster](https://phantombuster.com), which is basically our "NickJS as a service" platform.
 
 ## Environment variables
 
