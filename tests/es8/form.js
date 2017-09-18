@@ -1,12 +1,6 @@
 const Nick = require("../../lib/Nick")
 const nick = new Nick()
 
-const wait = (time) => {
-	return new Promise (resolve => {
-		setTimeout(resolve, time)
-	})
-}
-
 const testLog = (text) => {
 	console.log(`>> ${text}`)
 }
@@ -51,7 +45,8 @@ const testFill = async (tab, checkbox, color, date, email, number, radio, range,
 		"text": text
 	}, {submit: true})
 	testLog("Form filled")
-	await wait(1000)
+	await tab.wait(1000)
+	testLog("Wait done")
 	checkUrl(await tab.getUrl(), checkbox, color, date, email, number, radio, range, text)
 }
 
