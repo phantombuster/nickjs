@@ -88,7 +88,7 @@ The following environment variables have an effect on NickJS:
 
 # HTTP proxy
 
-NickJS supports HTTP (and HTTPS) proxies (other protocols are not yet supported). To specify which proxy to use, set the `httpProxy` option in [NickJS' constructor](https://hub.phantombuster.com/v1/reference#nick). You can also set the environment variable `NICKJS_PROXY` or the standard `http_proxy` (but the constructor option takes precedence).
+NickJS supports HTTP (and HTTPS) proxies. Other protocols are not yet supported. To specify which proxy to use, set the `httpProxy` option in [NickJS' constructor](https://hub.phantombuster.com/v1/reference#nick). You can also set the environment variable `NICKJS_PROXY` or the standard `http_proxy` (but the constructor option takes precedence).
 
 Your proxy must be specified in the following format: `http://username:password@proxy.com:3128` (the protocol portion is optional).
 
