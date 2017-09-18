@@ -12,6 +12,6 @@
 		">> Atleast one result from the table"
 	],
 	"files": [
-		{ "name": "tests/download/demo-dynamic-table.png", "minSize": "15000" }
+		{ "name": "tests/download/demo-dynamic-table.png", "minSize": "2000" }
 	]
 }
