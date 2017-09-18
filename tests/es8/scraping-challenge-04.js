@@ -42,15 +42,17 @@ nick.newTab((err, tab) => {
 				tab.waitUntilVisible(".person .panel-body", (err) => {
 					exitWithError(err)
 					testLog("Form page loaded")
-					tab.evaluate(scrape, (err, result) => {
-						exitWithError(err)
-						testLog("Evaluate done")
-						tab.screenshot("tests/download/scraping-challenge-04.jpg", (err) => {
+					tab.wait(1000, () => { // ):
+						tab.evaluate(scrape, (err, result) => {
 							exitWithError(err)
-							testLog("Screenshot done")
-							testLog(`Tenth result: ${result[9].name}`)
-							testLog(`Number of results: ${result.length}`)
-							nick.exit()
+							testLog("Evaluate done")
+							tab.screenshot("tests/download/scraping-challenge-04.jpg", (err) => {
+								exitWithError(err)
+								testLog("Screenshot done")
+								testLog(`Tenth result: ${result[9].name}`)
+								testLog(`Number of results: ${result.length}`)
+								nick.exit()
+							})
 						})
 					})
 				})
