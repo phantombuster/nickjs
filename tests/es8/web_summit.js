@@ -38,7 +38,7 @@ nick.newTab().then(async (tab) => {
 	await infiniteScroll(tab)
 	testLog("Scroll done")
 	const scrape = (arg, done) => {
-		const ret = jQuery("div.startups-popup").map(function() {
+		const ret = jQuery(".item").map(function() {
 			return {
 				name: jQuery(this).find("h3").text().trim(),
 				desc: jQuery(this).find("p:nth-child(3)").text().trim(),
@@ -51,8 +51,8 @@ nick.newTab().then(async (tab) => {
 	testLog("Scrape done")
 	const startupList = await tab.evaluate(scrape)
 	testLog(`Tenth startup: ${startupList[9].name}`)
-	if (startupList.length >= 100)
-		testLog("Atleast 100 startups")
+	if (startupList.length >= 10)
+		testLog("Atleast 10 startups")
 	nick.exit()
 })
 .catch((err) => {

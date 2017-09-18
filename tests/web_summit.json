@@ -5,7 +5,7 @@
 		">> Page loaded",
 		">> Scroll done",
 		">> Scrape done",
-		">> Atleast 100 startups"
+		">> Atleast 10 startups"
 	],
 	"files": []
 }
