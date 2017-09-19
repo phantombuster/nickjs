@@ -18,7 +18,7 @@ const botProcesses = []
 // Adds a test to the tape stack. Used per script: one for Headless Chrome, one for CasperJS
 const makeTest = (binaryName, binaryPath, test, binaryOptions) => {
 
-	tape(`${binaryName}: ${test.scriptName}`, { timeout: 30000 }, (assert) => {
+	tape(`${binaryName}: ${test.scriptName}`, { timeout: 60000 }, (assert) => {
 
 		if (Array.isArray(test.info.skip) && (test.info.skip.indexOf(binaryName) >= 0)) {
 			assert.skip(`This ${binaryName} test is disabled by configuration`)
