@@ -88,7 +88,7 @@ At the time of writing, NickJS is using some methods from Chrome 63 which was re
 
 The following environment variables have an effect on NickJS:
 
-- `CHROME_PATH`: **specifies where to find the Google Chrome binary — this is important!** Example: `"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome”`
+- `CHROME_PATH`: **specifies where to find the Google Chrome binary — this is important!** Example: `"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"`
 - `NICKJS_LOAD_IMAGES` (0 or 1): disables image loading (equivalent to NickJS' constructor option `loadImages`)
 - `NICKJS_NO_SANDBOX` (0 or 1): disables Chrome's sandboxing (no effect when the CasperJS+PhantomJS driver is used)
 - `NICKJS_PROXY` or `http_proxy`: see below
@@ -99,7 +99,7 @@ NickJS supports HTTP (and HTTPS) proxies. Other protocols are not yet supported.
 
 Your proxy must be specified in the following format: `http://username:password@proxy.com:3128` (the protocol portion is optional).
 
-Contrary to some other libraries, **NickJS does support proxy authentication for Chrome**.
+Contrary to some other libraries, **NickJS supports proxy authentication with Headless Chrome**.
 
 # Documentation
 
