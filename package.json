@@ -1,6 +1,6 @@
 {
   "name": "nickjs",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Headless browser automation library. Modern, simple & powerful, works on all websites.",
   "homepage": "https://nickjs.org/",
   "license": "ISC",
