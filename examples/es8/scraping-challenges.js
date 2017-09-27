@@ -8,6 +8,8 @@ const nick = new Nick({
 		/^.*\.woff$/
 		],
 	//printAborts: true
+	debug: true,
+	extraDebug: true
 })
 
 nick.newTab().then(async (tab) => {
