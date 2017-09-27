@@ -50,6 +50,7 @@ const scrape = (arg, callback) => {
 	testLog("Button clicked")
 	await tab.waitUntilVisible("table > tbody > tr > th")
 	testLog("Page loaded")
+	await tab.wait(1000) // :(
 	await tab.screenshot("tests/download/demo-dynamic-table.png")
 	testLog("Screenshot done")
 	const res = await tab.evaluate(scrape)
