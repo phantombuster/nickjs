@@ -82,7 +82,7 @@ Launching a bot is then as simple as `node my_nickjs_script.js`.
 
 NickJS makes use of the latest DevTools protocol methods, so you'll need a very recent version of Chrome.
 
-At the time of writing, NickJS is using some methods from Chrome 63 which was released not long ago. Having a recent version of Chrome is critical for a smooth experience with NickJS. Go to the [Chrome Release Channels](https://www.chromium.org/getting-involved/dev-channel) page and download a version compatible with your system. If you want this to be taken care of for you, check out [Phantombuster](https://phantombuster.com), which is basically our "NickJS as a service" platform.
+At the time of writing, NickJS is using some methods from Chrome 62, which is the Beta Channel. Having the correct version of Chrome is critical for a smooth experience with NickJS. Go to the [Chrome Release Channels](https://www.chromium.org/getting-involved/dev-channel) page and download a version compatible with your system. If you want this to be taken care of for you, check out [Phantombuster](https://phantombuster.com), which is basically our "NickJS as a service" platform.
 
 ## Environment variables
 
