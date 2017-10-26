@@ -40,7 +40,7 @@ const nick = new Nick()
 
 	await tab.untilVisible("#hnmain") // Make sure we have loaded the page
 
-	await tab.inject("../injectables/jquery-3.0.0.min.js") // We're going to use jQuery to scrape
+	await tab.inject("http://code.jquery.com/jquery-3.2.1.min.js") // We're going to use jQuery to scrape
 	const hackerNewsLinks = await tab.evaluate((arg, callback) => {
 		// Here we're in the page context. It's like being in your browser's inspector tool
 		const data = []
@@ -141,7 +141,7 @@ Contrary to some other libraries, **NickJS supports proxy authentication with He
 
 
 # Nick([options])
-**This is Nick's constructor. `options` is an optional argument that lets you configure your Nick instance.** 
+**This is Nick's constructor. `options` is an optional argument that lets you configure your Nick instance.**
 
 
 
@@ -387,7 +387,7 @@ Function called when finished (*optional*).
 ```javascript
 try {
   await tab.close()
-  // tab can not be used here anymore 
+  // tab can not be used here anymore
   // but you may continue other actions
 } catch (err) {
   console.log("Could not close tab:", err)
@@ -480,7 +480,7 @@ CSS selector targeting what form to fill. It should point to a `form` tag. Make 
 
 ### — inputs `(PlainObject)`
 
-An object containing the data you want to enter in the form. 
+An object containing the data you want to enter in the form.
 **Keys must correspond to the inputs' `name` attribute.** This method supports single `select` fields in the same way as normal `input` fields. For `select` fields allowing multiple selections, supply an array of values to match against.
 
 ### — options `(Boolean)`
@@ -703,7 +703,7 @@ tab.onPrompt = (message) => {
 ```
 
 # open(url [, options, callback])
-**Opens the webpage at `url`.** 
+**Opens the webpage at `url`.**
 
 By default, it's a `GET` but you can forge any type of HTTP request using the `options` parameter.
 
@@ -733,7 +733,7 @@ const url = "https://phantombuster.com/"
 
 try {
   const [httpCode, httpStatus] = await tab.open(url)
-  
+
   if ((httpCode >= 300) || (httpCode < 200)) {
     console.log("The site responded with", httpCode, httpStatus)
   } else {
