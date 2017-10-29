@@ -74,7 +74,7 @@ NickJS will choose which headless browser to use depending on how you launch it.
 
 To get started with the PhantomJS driver, [read this](PHANTOMJS.md). However we recommend using Headless Chrome (read on).
 
-You'll need to have Node 7+ and Chrome 63+ installed on your system (read the next section for more info about which Chrome version you should use). The path to the Chrome executable can be specified with `export CHROME_PATH=/path/to/chrome` otherwise the binary `google-chrome-unstable` will be used.
+You'll need to have Node 7+ and Chrome 63+ installed on your system (read the next section for more info about which Chrome version you should use). The path to the Chrome executable can be specified with `export CHROME_PATH=/path/to/chrome` otherwise the binary `google-chrome-beta` will be used.
 
 Launching a bot is then as simple as `node my_nickjs_script.js`.
 
@@ -82,7 +82,7 @@ Launching a bot is then as simple as `node my_nickjs_script.js`.
 
 NickJS makes use of the latest DevTools protocol methods, so you'll need a very recent version of Chrome.
 
-At the time of writing, NickJS is using some methods from Chrome 62, which is the Beta Channel. Having the correct version of Chrome is critical for a smooth experience with NickJS. Go to the [Chrome Release Channels](https://www.chromium.org/getting-involved/dev-channel) page and download a version compatible with your system. If you want this to be taken care of for you, check out [Phantombuster](https://phantombuster.com), which is basically our "NickJS as a service" platform.
+At the time of writing, NickJS is using some methods from Chrome 63, which is the Beta Channel. Having the correct version of Chrome is critical for a smooth experience with NickJS. Go to the [Chrome Release Channels](https://www.chromium.org/getting-involved/dev-channel) page and download a version compatible with your system. If you want this to be taken care of for you, check out [Phantombuster](https://phantombuster.com), which is basically our "NickJS as a service" platform.
 
 ## Environment variables
 
@@ -99,7 +99,7 @@ NickJS supports HTTP (and HTTPS) proxies. Other protocols are not yet supported.
 
 Your proxy must be specified in the following format: `http://username:password@proxy.com:3128` (the protocol portion is optional).
 
-Contrary to some other libraries, **NickJS supports proxy authentication with Headless Chrome**.
+Contrary to some other libraries, yes, **NickJS supports proxy authentication with Headless Chrome**.
 
 # Documentation
 
