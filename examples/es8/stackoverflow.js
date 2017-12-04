@@ -1,5 +1,7 @@
 const Nick = require("../../lib/Nick")
-const nick = new Nick()
+const nick = new Nick({
+	headless: false
+})
 
 ;(async () => {
 
@@ -20,7 +22,7 @@ const nick = new Nick()
 	for (const link of top10questionLinks) {
 		await tab.open(link)
 		await tab.untilVisible(".postcell .post-text")
-		//await tab.wait(5000)
+		await tab.wait(5000)
 	}
 
 	nick.exit()
