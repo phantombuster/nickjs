@@ -13,6 +13,7 @@
     "lodash": "^4.17.4",
     "needle": "^1.6.0",
     "once": "^1.4.0",
+    "pidusage": "^1.2.0",
     "to-boolean": "^1.0.0"
   },
   "devDependencies": {
