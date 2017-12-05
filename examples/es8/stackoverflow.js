@@ -8,7 +8,7 @@ const nick = new Nick({
 
 	const tab = await nick.newTab()
 
-	await tab.open("stackoverflow.com")
+	await tab.open("stackoverfloW.com")
 	await tab.untilVisible(".question-summary.narrow")
 	const top10questionLinks = await tab.evaluate((arg, callback) => {
 		const ret = []
