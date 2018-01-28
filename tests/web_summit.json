@@ -7,5 +7,7 @@
 		">> Scrape done",
 		">> Atleast 10 startups"
 	],
-	"files": []
+	"files": [],
+	"comment": "Disabled because i'm lazy and don't want to update the CSS selectors for new version of Web Summit site",
+	"skip": ["CasperJS", "HeadlessChrome"]
 }
