@@ -1,5 +1,7 @@
 .git
 .gitignore
-logo.png
+*.png
+*.jpg
+*.jpeg
 node_modules/
 tests/
