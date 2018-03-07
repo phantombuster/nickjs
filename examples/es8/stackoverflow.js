@@ -27,7 +27,7 @@ const nick = new Nick({
 		await tab.untilVisible(".postcell .post-text")
 		await tab.wait(3000)
 		console.log("Taking screenshot")
-		await tab.screenshot(`stackoverflow${pos}.png`)
+		await tab.screenshot(`stackoverflow${pos}.jpg`, { quality: 40 })
 		await tab.wait(3000)
 		++pos
 	}
