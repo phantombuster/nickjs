@@ -8,7 +8,8 @@ const nick = new Nick({
 
 	const tab = await nick.newTab()
 
-	await tab.open("stackoverfloW.com")
+	const [status, statusText, newUrl] = await tab.open("stackoverflow.com")
+	console.log(`OPEN RET: ${status}, ${statusText}, ${newUrl}`)
 	await tab.untilVisible(".question-summary.narrow")
 	const top10questionLinks = await tab.evaluate((arg, callback) => {
 		const ret = []
