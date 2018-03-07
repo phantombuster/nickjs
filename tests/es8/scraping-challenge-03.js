@@ -31,7 +31,7 @@ nick.newTab().then((tab) => {
 	})
 	.then(() => {
 		testLog("Inject distant file done")
-		return tab.screenshot("tests/download/scraping-challenge-03.jpg")
+		return tab.screenshot("tests/download/scraping-challenge-03.jpg", { fullPage: false })
 	})
 	.then(() => {
 		testLog("Screenshot done")

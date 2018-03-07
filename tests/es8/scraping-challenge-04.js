@@ -46,7 +46,7 @@ nick.newTab((err, tab) => {
 						tab.evaluate(scrape, (err, result) => {
 							exitWithError(err)
 							testLog("Evaluate done")
-							tab.screenshot("tests/download/scraping-challenge-04.jpg", (err) => {
+							tab.screenshot("tests/download/scraping-challenge-04.jpg", { fullPage: false }, (err) => {
 								exitWithError(err)
 								testLog("Screenshot done")
 								testLog(`Tenth result: ${result[9].name}`)
