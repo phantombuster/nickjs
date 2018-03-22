@@ -1,7 +1,7 @@
 const Nick = require("../../lib/Nick")
 const nick = new Nick({
 	headless: true,
-	debug: false
+	debug: true
 })
 
 ;(async () => {
