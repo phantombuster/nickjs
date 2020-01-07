@@ -158,6 +158,10 @@ Optional settings for the Nick instance.
 * **`loadImages (Boolean)`**: whether or not to load the images embedded in the pages (defaults to `true`) (note: specifying this parameter overrides the agent's Phantombuster setting "Load Images")
 * **`blacklist (Array)`**: soon!
 * **`whitelist (Array)`**: soon!
+* **`childStdout (String)`**: when `stderr` can redirect stdout to stderr
+* **`childStdout (String)`**: when `stdout` can redirect stderr to stdout
+* **`additionalChildOptions (Array)`**: When chrome is used this is an Array of string (e.g `["--ignore-certificate-errors", "--ignore-urlfetcher-cert-requests"]`), for CasperJs though this is an array of objects (e.g `[{verbose: true, logLevel: "debug" }]`)
+
 ##### Basic (ES6+)
 ```javascript
 const Nick = require("nickjs")
