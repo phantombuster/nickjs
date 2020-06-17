@@ -3,6 +3,14 @@
     <img alt="NickJS" src="https://raw.githubusercontent.com/phantombuster/nickjs/master/logo.png">
   </a>
 </p>
+<hr/>
+<h1 align="center">
+  ⛔ This project is deprecated, please consider using [Puppeteer](https://github.com/puppeteer/puppeteer) instead. ⛔
+</h1>
+<p align="center">
+  NickJS predates Puppeteer and is no longer the best tool around. This project isn't maintained anymore.
+</p>
+<hr/>
 
 <p align="center">
   Web scraping library made by the <a href="https://phantombuster.com">Phantombuster</a> team. Modern, simple & works on all websites.
