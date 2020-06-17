@@ -4,9 +4,9 @@
   </a>
 </p>
 <hr/>
-<h1 align="center">
+<p align="center">
   ⛔ This project is deprecated, please consider using <a href="https://github.com/puppeteer/puppeteer">Puppeteer</a> instead. ⛔
-</h1>
+</p>
 <p align="center">
   NickJS predates Puppeteer and is no longer the best tool around. This project isn't maintained anymore.
 </p>
@@ -17,7 +17,6 @@
 </p>
 
 <p align="center">
-  <a href="https://travis-ci.org/phantombuster/nickjs"><img alt="Travis CI build status" src="https://img.shields.io/travis/phantombuster/nickjs.svg?style=flat-square"></a>
   <a href="https://www.npmjs.com/package/nickjs"><img alt="NPM version" src="https://img.shields.io/npm/v/nickjs.svg?style=flat-square"></a>
   <a href="https://gitter.im/phantombuster/nickjs"><img alt="Gitter room" src="https://img.shields.io/gitter/room/Phantombuster/Lobby.svg?style=flat-square"></a>
   <a href="https://twitter.com/phbuster"><img alt="Twitter follow" src="https://img.shields.io/twitter/follow/phbuster.svg?style=social&label=Follow"></a>
