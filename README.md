@@ -23,7 +23,7 @@
 </p>
 
 <p align="center">
-  <a href="http://nickjs.org">NickJS.org</a> — <a href="https://github.com/phantombuster/nickjs#documentation">Inline doc ↓</a> — <b><a href="https://hub.phantombuster.com/v1/reference#nick">Hosted doc</a></b>
+  <a href="http://nickjs.org">NickJS.org</a> — <a href="https://github.com/phantombuster/nickjs#documentation">Inline doc ↓</a>
 </p>
 
 * Supports both Headless Chrome and PhantomJS as drivers
