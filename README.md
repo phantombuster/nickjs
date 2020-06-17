@@ -5,7 +5,7 @@
 </p>
 <hr/>
 <h1 align="center">
-  ⛔ This project is deprecated, please consider using [Puppeteer](https://github.com/puppeteer/puppeteer) instead. ⛔
+  ⛔ This project is deprecated, please consider using <a href="https://github.com/puppeteer/puppeteer">Puppeteer</a> instead. ⛔
 </h1>
 <p align="center">
   NickJS predates Puppeteer and is no longer the best tool around. This project isn't maintained anymore.
